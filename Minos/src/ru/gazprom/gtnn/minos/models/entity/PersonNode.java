@@ -2,16 +2,25 @@ package ru.gazprom.gtnn.minos.models.entity;
 
 import java.util.Date;
 
+import ru.gazprom.gtnn.minos.annotations.TableColumn;
+import ru.gazprom.gtnn.minos.annotations.TableName;
+
+@TableName(name = "Person")
 public class PersonNode {
-	public int id;
-	public String surname;		 
-	public String name;			 
-	public String patronymic;
-	public String	sex;
-	public Date birthDate;
-	private static final Date TODAY = new Date();
-	private static final long MSinYEAR = 1000*60*60*24*366;
+	@TableColumn
+	public int personID;
+	@TableColumn
+	public String personSurname;		 
+	@TableColumn
+	public String personName;			 
+	@TableColumn
+	public String personPatronymic;
+	@TableColumn
+	public String personSex;
+	@TableColumn
+	public Date personBirthDate;
 	
+	public PersonNode() { }
 	
 	@Override
 	public boolean equals(Object obj) {
@@ -20,28 +29,19 @@ public class PersonNode {
 		if(obj == this)
 			return true;
 		
-		if(this.getClass() != obj.getClass())
+		if(!(obj instanceof PersonNode))		
 			return false;		
 			
-		return (this.id == ((PersonNode)obj).id ? true : false);
+		return (this.personID == ((PersonNode)obj).personID ? true : false);
 	}
 
 	@Override
 	public int hashCode() {		
-		return id;
+		return personID;
 	}
-
+/*
 	@Override
 	public String toString() {
-		//long dif = (TODAY.getTime() - birthDate.getTime()) / MSinYEAR;
-		
-		/*
-GregorianCalendar c1 = new GregorianCalendar();
-GregorianCalendar c2 = new GregorianCalendar();
-c1.set(2000, 1, 1);
-c2.set(2010,1, 1);
-c2.add(GregorianCalendar.MILLISECOND, -1 * c1.getTimeInMillis());
-		 */
 	
 		StringBuilder sb = new StringBuilder();
 		sb.append(surname).append(" ").
@@ -51,6 +51,19 @@ c2.add(GregorianCalendar.MILLISECOND, -1 * c1.getTimeInMillis());
 		append("  [ Возраст :").append(birthDate).append(" ]");
 		return sb.toString();
 	}
+*/
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("id=").append(personID).append("\n").
+		append("surname=").append(personSurname).append("\n").
+		append("name=").append(personName).append("\n").
+		append("patronymic=").append(personPatronymic).append("\n").
+		append("sex=").append(personSex).append("\n").
+		append("birthDate=").append(personBirthDate).append("\n");
+		
+		return sb.toString();
+	}
 
-
+	
 }

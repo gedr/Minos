@@ -1,4 +1,4 @@
-package ru.gazprom.gtnn.minos.models.entity;
+package ru.gazprom.gtnn.minos.entity;
 
 public class TestRound {
 	public int id;

@@ -1,11 +1,12 @@
-package ru.gazprom.gtnn.minos.models.entity;
+package ru.gazprom.gtnn.minos.entity;
 
+import java.util.Calendar;
 import java.util.Date;
 
 import ru.gazprom.gtnn.minos.annotations.TableColumn;
 import ru.gazprom.gtnn.minos.annotations.TableName;
 
-@TableName(name = "Person")
+@TableName(name = "PersonTable")
 public class PersonNode {
 	@TableColumn
 	public int personID;
@@ -39,31 +40,27 @@ public class PersonNode {
 	public int hashCode() {		
 		return personID;
 	}
-/*
+
 	@Override
 	public String toString() {
-	
-		StringBuilder sb = new StringBuilder();
-		sb.append(surname).append(" ").
-		append(name).append(" " ).
-		append(patronymic).
-		append("  [ Пол :").append(sex).append(" ]").		
-		append("  [ Возраст :").append(birthDate).append(" ]");
-		return sb.toString();
-	}
-*/
-	@Override
-	public String toString() {
+		Calendar cal1 = Calendar.getInstance();
+		cal1.setTime(personBirthDate);
+
 		StringBuilder sb = new StringBuilder();
 		sb.append("id=").append(personID).append("\n").
 		append("surname=").append(personSurname).append("\n").
 		append("name=").append(personName).append("\n").
 		append("patronymic=").append(personPatronymic).append("\n").
 		append("sex=").append(personSex).append("\n").
-		append("birthDate=").append(personBirthDate).append("\n");
+		append("birthDate=").append(personBirthDate).append("\n").
+		append(currentDate.get(Calendar.YEAR) - cal1.get(Calendar.YEAR)).append("\n");
 		
 		return sb.toString();
 	}
 
-	
+	private static Calendar currentDate;
+	static { // static initialization
+		currentDate = Calendar.getInstance();
+		currentDate.setTime(new Date());
+	}
 }

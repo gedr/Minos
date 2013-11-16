@@ -6,8 +6,6 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 public class DatabaseConnectionKeeper {	
@@ -30,17 +28,19 @@ public class DatabaseConnectionKeeper {
 	 * @return string of SQL for execute or null
 	 */
 	public String makeSQLString(String sourceStr, String patternStr, String replaceStr) {
-		Pattern p = Pattern.compile(patternStr);
-		Matcher m = p.matcher(sourceStr);
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
+		sb.append(sourceStr);
+		
 		int count = 0;
-		while (m.find()) {
-			m.appendReplacement(sb, replaceStr);
+		int ind;		
+		while((ind = sb.indexOf(patternStr)) != -1) {
+			sb.delete(ind,  ind + patternStr.length());
+			sb.insert(ind,  replaceStr);
 			count++;
 		}
+			
 		return count > 0 ? sb.toString() : null;
 	}
-
 	
 	/**
 	 * <p>Выборка из таблицы  
@@ -52,19 +52,26 @@ public class DatabaseConnectionKeeper {
 		if(sqlExpression == null)
 			throw new IllegalArgumentException("DatabaseConnectionKeeper.selectRows() sqlExpression is null");
 				
-		Statement stmt = con.createStatement(); 
+		Statement stmt = con.createStatement( ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 		ResultSet rs = stmt.executeQuery(sqlExpression);
+		int rowCount = 0;
+		if(rs.last()){
+			rowCount = rs.getRow();
+			rs.beforeFirst();
+		}		
+		
 		ResultSetMetaData rsmd = rs.getMetaData();
-		if((rs.getRow() == 0) || (rsmd.getColumnCount() == 0)) {
+		if((rowCount == 0) || (rsmd.getColumnCount() == 0)) {
 			closeResultSet(rs);
-			closeStatement(stmt);	
+			closeStatement(stmt);
+			return null;
 		}
 				
-		TableKeeper tk = new TableKeeper(rs.getRow(), rsmd.getColumnCount());
+		TableKeeper tk = new TableKeeper(rowCount, rsmd.getColumnCount());
 		
 		// формируем список столбцов и типов
 		for(int i = 1; i <= rsmd.getColumnCount(); i++) {
-			tk.setColumnDescr(new TableKeeper.ColumnDescr(rsmd.getCatalogName(i), rsmd.getColumnType(i)), i);								
+			tk.setColumnDescr(new TableKeeper.ColumnDescr(rsmd.getColumnName(i), rsmd.getColumnType(i)), i);								
 		}
 
 		// формируем список всех строк выборки
@@ -120,12 +127,6 @@ public class DatabaseConnectionKeeper {
 					tk.setValue(rs.getBoolean(i), rowNumber, i);
 					break;
 
-				case java.sql.Types.CHAR:
-				case java.sql.Types.VARCHAR:
-				case java.sql.Types.LONGVARCHAR:
-					tk.setValue(rs.getString(i), rowNumber, i);
-					break;
-
 				case java.sql.Types.BINARY:
 				case java.sql.Types.VARBINARY:
 					tk.setValue(rs.getBytes(i), rowNumber, i);
@@ -133,6 +134,15 @@ public class DatabaseConnectionKeeper {
 
 				case java.sql.Types.LONGVARBINARY:
 					tk.setValue(rs.getBinaryStream(i), rowNumber, i);
+					break;
+					
+				case java.sql.Types.CHAR:
+				case java.sql.Types.VARCHAR:
+				case java.sql.Types.LONGVARCHAR:
+				case java.sql.Types.NCHAR:
+				case java.sql.Types.NVARCHAR:
+				case java.sql.Types.LONGNVARCHAR:					
+					tk.setValue(rs.getString(i), rowNumber, i);
 					break;
 
 				default:

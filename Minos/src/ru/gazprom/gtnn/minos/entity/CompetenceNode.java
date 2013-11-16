@@ -1,17 +1,22 @@
-package ru.gazprom.gtnn.minos.models.entity;
+package ru.gazprom.gtnn.minos.entity;
 
-public class IndicatorNode {
+import java.util.List;
+
+public class CompetenceNode {
 	public int id;
 	public String name;
+	public String descr;
 	public int item;
-	public int levelID;
-	public int competenceIncarnatio;
+	public int catalogID;
+	public int incarnatio;
+	public int chainNumber;
+	public List<Integer> indicators;		
 
 	@Override
 	public String toString() {
 		return name;
 	}
-
+	
 	@Override
 	public boolean equals(Object obj) {
 		if(obj == null) 
@@ -22,7 +27,7 @@ public class IndicatorNode {
 		if(this.getClass() != obj.getClass())
 			return false;		
 			
-		return (this.id == ((IndicatorNode)obj).id ? true : false);
+		return (this.id == ((CompetenceNode)obj).id ? true : false);
 	}
 
 	@Override

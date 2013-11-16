@@ -24,9 +24,13 @@ public class TableKeeper {
 		this.columnCount = columnCount;
 		
 		columns = new ColumnDescr[columnCount];
-		tbl = new Object[rowCount][];
-		for(int i = 0; i < rowCount; i++)
-			tbl[i] = new Object[columnCount];		
+		if(columnCount == 1) {
+			lst = new Object[rowCount];
+		} else {
+			tbl = new Object[rowCount][];
+			for(int i = 0; i < rowCount; i++)
+				tbl[i] = new Object[columnCount];
+		}
 	}
 	
 	/**
@@ -69,7 +73,11 @@ public class TableKeeper {
 		if((rowNumber < 1) || (rowNumber > rowCount))
 			throw new IllegalArgumentException("TableKeeper.setValue() get illegal value of rowNumber (" + rowNumber + ")");
 		
-		tbl[rowNumber - 1][columnNumber - 1] = value;
+		if(columnCount == 1) {
+			lst[rowNumber - 1] = value;
+		} else {
+			tbl[rowNumber - 1][columnNumber - 1] = value;
+		}		
 	}
 
 	/**
@@ -127,7 +135,7 @@ public class TableKeeper {
 		if((rowNumber < 1) || (rowNumber > rowCount))
 			throw new IllegalArgumentException("TableKeeper.getValue() get illegal value of rowNumber (" + rowNumber + ")");
 		
-		return tbl[rowNumber - 1][columnNumber - 1];
+		return ((columnCount == 1)  ? lst[rowNumber - 1] : tbl[rowNumber - 1][columnNumber - 1]);
 	}
 	
 	/**
@@ -147,6 +155,7 @@ public class TableKeeper {
 	}
 
 	private Object [][] tbl;
+	private Object [] lst;
 	private ColumnDescr[] columns;
 	private int rowCount;
 	private int columnCount;	

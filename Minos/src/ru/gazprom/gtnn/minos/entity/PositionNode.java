@@ -1,10 +1,9 @@
-package ru.gazprom.gtnn.minos.models.entity;
+package ru.gazprom.gtnn.minos.entity;
 
-public class LevelNode {
+public class PositionNode {
 	public int id;
-	public String name;
-	public double price;
-	
+	public String name;			 
+
 	@Override
 	public boolean equals(Object obj) {
 		if(obj == null) 
@@ -15,7 +14,7 @@ public class LevelNode {
 		if(this.getClass() != obj.getClass())
 			return false;		
 			
-		return (this.id == ((LevelNode)obj).id ? true : false);
+		return (this.id == ((PositionNode)obj).id ? true : false);
 	}
 
 	@Override
@@ -27,4 +26,5 @@ public class LevelNode {
 	public String toString() {
 		return name;
 	}
+
 }

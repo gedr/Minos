@@ -12,7 +12,7 @@ public class LevelNode {
 		if(obj == this)
 			return true;
 		
-		if(this.getClass() != obj.getClass())
+		if( !(obj instanceof LevelNode))
 			return false;		
 			
 		return (this.id == ((LevelNode)obj).id ? true : false);

@@ -44,21 +44,19 @@ public class MinosCacheLoader<KeyT, ValueT> extends CacheLoader<KeyT, ValueT> {
 	}
 		
 	@Override
-	public ValueT load(KeyT arg) throws Exception {	
-		System.out.println("load");
-		String sql = kdb.makeSQLString(sqlForLoadRow, patternID, arg.toString());
-		Preconditions.checkNotNull(sql, "MinosCacheLoader.load() : makeSQLString() return null");
-		TableKeeper tk = kdb.selectRows(sql);
-		Preconditions.checkNotNull(tk, "MinosCacheLoader.load() : selectRows() return null");
-		Preconditions.checkState(tk.getRowCount() == 1, "MinosCacheLoader.load() : selectRows() return incorrect row count (" + tk.getRowCount() + ")");
-		
+	public ValueT load(KeyT arg) throws Exception {		
+		String sql = kdb.makeSQLString(sqlForLoadRow, patternID, arg.toString());		
+		Preconditions.checkNotNull(sql, "MinosCacheLoader.load() : makeSQLString() return null");		
+		TableKeeper tk = kdb.selectRows(sql);		
+		Preconditions.checkNotNull(tk, "MinosCacheLoader.load() : selectRows() return null");		
+		Preconditions.checkState(tk.getRowCount() == 1, "MinosCacheLoader.load() : selectRows() return incorrect row count (" + tk.getRowCount() + ")");	
+				
 		return createObjectAndFillFieldsFromTable(tk, 1);
 	}
 	
 	@Override
 	public Map<KeyT, ValueT> loadAll(Iterable<? extends KeyT> keys)
-			throws Exception {
-		System.out.println("loadAll");
+			throws Exception {		
 		Preconditions.checkNotNull(keys, "MinosCacheLoader.loadAll() : argument is null");
 		Map<KeyT, ValueT> map = new HashMap<>();
 		
@@ -86,17 +84,19 @@ public class MinosCacheLoader<KeyT, ValueT> extends CacheLoader<KeyT, ValueT> {
 		
 	
 	private ValueT createObjectAndFillFieldsFromTable(TableKeeper tk, int rowNumder) throws Exception {
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings("unchecked")		
 		ValueT inst = (ValueT) vclass.newInstance();
 		Preconditions.checkNotNull(inst, "MinosCacheLoader.createAndFillObjectFieldsFromTable() : cannot create new object");
 		
 		for(Field f : inst.getClass().getFields()) {
-			if(f.isAnnotationPresent(TableColumn.class)) {
-				int cn = tk.getColumnNumberByName(mapFieldOnColumn.get(f.getName()), true);
-				f.set(inst, tk.getValue(rowNumder, cn));				
+			String tableColumnName = mapFieldOnColumn.get(f.getName());			
+			if((tableColumnName != null) && f.isAnnotationPresent(TableColumn.class)) {				
+				int cn = tk.getColumnNumberByName(tableColumnName, true);				
+				if(cn != -1)					
+					f.set(inst, tk.getValue(rowNumder, cn));				
 			}
 		}
-		
+				
 		return inst;		
 	}
 

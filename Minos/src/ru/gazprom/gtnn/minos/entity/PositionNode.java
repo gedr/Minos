@@ -1,8 +1,14 @@
 package ru.gazprom.gtnn.minos.entity;
 
+import ru.gazprom.gtnn.minos.annotations.TableColumn;
+import ru.gazprom.gtnn.minos.annotations.TableName;
+
+@TableName(name = "PersonTable")
 public class PositionNode {
-	public int id;
-	public String name;			 
+	@TableColumn
+	public int positionID;
+	@TableColumn
+	public String positionName;			 
 
 	@Override
 	public boolean equals(Object obj) {
@@ -11,20 +17,20 @@ public class PositionNode {
 		if(obj == this)
 			return true;
 		
-		if(this.getClass() != obj.getClass())
+		if(!(obj instanceof PositionNode))
 			return false;		
 			
-		return (this.id == ((PositionNode)obj).id ? true : false);
+		return (this.positionID == ((PositionNode)obj).positionID ? true : false);
 	}
 
 	@Override
 	public int hashCode() {		
-		return id;
+		return positionID;
 	}
 
 	@Override
 	public String toString() {
-		return name;
+		return positionName;
 	}
 
 }

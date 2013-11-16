@@ -11,16 +11,20 @@ import ru.gazprom.gtnn.minos.util.TableKeeper;
 
 public abstract class BasicModel {
 	public BasicModel(DatabaseConnectionKeeper kdb) {
+		super();
 		this.kdb = kdb;
 	}
 
-	protected <T, P> List<T> loadChildIDs(String sql, String pattern, P parentID) {
+	protected <T, P> List<T> loadChildIDs(String sql, String pattern, P parentID) {		
 		List<T> lst = Collections.emptyList();
 		try {			
 			String request = kdb.makeSQLString(sql, pattern, parentID.toString());
 			Preconditions.checkNotNull(request, "BasicModel.loadChildIDs() : makeSQLString return null");
 			
 			TableKeeper tk = kdb.selectRows(request);
+			if(tk == null)
+				return lst;
+			
 			Preconditions.checkState(tk.getColumnCount() == 1, 
 					"BasicModel.loadChildIDs() : selectRows() return incorrect column count (" + tk.getColumnCount() + ")");
 						

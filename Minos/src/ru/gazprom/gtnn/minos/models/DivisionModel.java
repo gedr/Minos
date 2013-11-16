@@ -1,6 +1,6 @@
 package ru.gazprom.gtnn.minos.models;
 
-import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
@@ -35,7 +35,7 @@ public class DivisionModel extends BasicModel implements TreeModel {
 				Preconditions.checkState(((tk.getRowCount() == 1) && (tk.getColumnCount() == 1)),						
 						"DivisionModel.getRoot() : selectRows() return incorrect row and column count (" + tk.getRowCount() + " , " + tk.getColumnCount() + ")");
 								
-				root = cacheDivision.get((Integer) tk.getValue(0, 1));				
+				root = cacheDivision.get((Integer) tk.getValue(1, 1));				
 				root.subDivisions = loadChildIDs(sqlLoadSubDivisionIDs, patternParentID, root.divisionID);
 				if(root.subDivisions.size() != 0)
 					cacheDivision.getAll(root.subDivisions);
@@ -54,11 +54,7 @@ public class DivisionModel extends BasicModel implements TreeModel {
 			return true;		
 		
 		DivisionNode node = (DivisionNode)arg;
-		if(node.subDivisions == null)  {
-			node.subDivisions = loadChildIDs(sqlLoadSubDivisionIDs, patternParentID, node.divisionID);
-			if(node.subDivisions.size() != 0)
-				cacheDivision.getAll(node.subDivisions);
-		}
+		checkAndLoadSubDivisions(node);
 		
 		return (node.subDivisions.size() == 0);
 	}
@@ -70,12 +66,8 @@ public class DivisionModel extends BasicModel implements TreeModel {
 			return 0;
 		
 		DivisionNode node = (DivisionNode)arg;
-		if(node.subDivisions == null)  {
-			node.subDivisions = loadChildIDs(sqlLoadSubDivisionIDs, patternParentID, node.divisionID);
-			if(node.subDivisions.size() != 0)
-				cacheDivision.getAll(node.subDivisions);
-		}
-
+		checkAndLoadSubDivisions(node);
+		
 		return node.subDivisions.size();
 	}
 
@@ -87,11 +79,7 @@ public class DivisionModel extends BasicModel implements TreeModel {
 			return null;
 
 		DivisionNode node = (DivisionNode)arg;
-		if(node.subDivisions == null)  {
-			node.subDivisions = loadChildIDs(sqlLoadSubDivisionIDs, patternParentID, node.divisionID);
-			if(node.subDivisions.size() != 0)
-				cacheDivision.getAll(node.subDivisions);
-		}
+		checkAndLoadSubDivisions(node);
 		
 		assert ((0 <= index) && (index < node.subDivisions.size())) : "DivisionTreeModel.getChild() : index out of range";
 		if((index < 0) || (index >= node.subDivisions.size()))
@@ -120,11 +108,7 @@ public class DivisionModel extends BasicModel implements TreeModel {
 		DivisionNode nodeParent = (DivisionNode)parent;
 		DivisionNode nodeChild = (DivisionNode)child;
 
-		if(nodeParent.subDivisions == null)  {
-			nodeParent.subDivisions = loadChildIDs(sqlLoadSubDivisionIDs, patternParentID, nodeParent.divisionID);
-			if(nodeParent.subDivisions.size() != 0)
-				cacheDivision.getAll(nodeParent.subDivisions);
-		}
+		checkAndLoadSubDivisions(nodeParent);
 		
 		int offs = -1;
 		for(int i = 0; i < nodeParent.subDivisions.size(); i++) {
@@ -153,6 +137,18 @@ public class DivisionModel extends BasicModel implements TreeModel {
 	public void valueForPathChanged(TreePath path, Object newValue) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	private void checkAndLoadSubDivisions(DivisionNode dn) {
+		if(dn.subDivisions == null)  {
+			dn.subDivisions = loadChildIDs(sqlLoadSubDivisionIDs, patternParentID, dn.divisionID);
+			if(dn.subDivisions.size() != 0)
+				try {
+					cacheDivision.getAll(dn.subDivisions);
+				} catch (ExecutionException e) {					
+					e.printStackTrace();
+				}
+		}
 	}
 
 	private DivisionNode root = null;

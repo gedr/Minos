@@ -24,7 +24,7 @@ public class CompetenceNode {
 		if(obj == this)
 			return true;
 		
-		if(this.getClass() != obj.getClass())
+		if( !(obj instanceof CompetenceNode))
 			return false;		
 			
 		return (this.id == ((CompetenceNode)obj).id ? true : false);

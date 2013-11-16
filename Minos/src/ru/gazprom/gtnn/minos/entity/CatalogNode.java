@@ -21,7 +21,7 @@ public class CatalogNode {
 		if(obj == this)
 			return true;
 		
-		if(obj.getClass() != this.getClass())
+		if( !(obj instanceof CatalogNode) )
 			return false;
 		
 		return (this.id == ((CatalogNode)obj).id ? true : false);

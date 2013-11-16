@@ -2,7 +2,6 @@ package ru.gazprom.gtnn.minos.entity;
 
 import java.util.Calendar;
 import java.util.Date;
-
 import ru.gazprom.gtnn.minos.annotations.TableColumn;
 import ru.gazprom.gtnn.minos.annotations.TableName;
 
@@ -20,8 +19,6 @@ public class PersonNode {
 	public String personSex;
 	@TableColumn
 	public Date personBirthDate;
-	
-	public PersonNode() { }
 	
 	@Override
 	public boolean equals(Object obj) {
@@ -44,16 +41,16 @@ public class PersonNode {
 	@Override
 	public String toString() {
 		Calendar cal1 = Calendar.getInstance();
-		cal1.setTime(personBirthDate);
+		cal1.setTime(personBirthDate != null ? personBirthDate : new Date());
 
 		StringBuilder sb = new StringBuilder();
-		sb.append("id=").append(personID).append("\n").
-		append("surname=").append(personSurname).append("\n").
-		append("name=").append(personName).append("\n").
-		append("patronymic=").append(personPatronymic).append("\n").
-		append("sex=").append(personSex).append("\n").
-		append("birthDate=").append(personBirthDate).append("\n").
-		append(currentDate.get(Calendar.YEAR) - cal1.get(Calendar.YEAR)).append("\n");
+		sb.append("[id=").append(personID).append(" ] ").
+		append("[surname=").append(personSurname).append(" ] ").
+		append("[name=").append(personName).append(" ] ").
+		append("[patronymic : ").append(personPatronymic).append(" ] ").
+		append("[ sex :").append(personSex).append(" ] ").
+		append("[ birthDate :").append(personBirthDate).append(" ] ").
+		append("[ Age : ").append(currentDate.get(Calendar.YEAR) - cal1.get(Calendar.YEAR)).append(" ] ");		
 		
 		return sb.toString();
 	}

@@ -18,7 +18,7 @@ public class TestRound {
 		if(obj == this)
 			return true;
 		
-		if(obj.getClass() != this.getClass())
+		if( !(obj instanceof TestRound))
 			return false;
 		
 		return (this.id == ((TestRound)obj).id ? true : false);

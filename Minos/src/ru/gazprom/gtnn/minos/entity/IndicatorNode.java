@@ -19,7 +19,7 @@ public class IndicatorNode {
 		if(obj == this)
 			return true;
 		
-		if(this.getClass() != obj.getClass())
+		if( !(obj instanceof IndicatorNode))
 			return false;		
 			
 		return (this.id == ((IndicatorNode)obj).id ? true : false);

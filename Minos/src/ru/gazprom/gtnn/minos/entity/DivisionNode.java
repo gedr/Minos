@@ -28,7 +28,7 @@ public class DivisionNode {
 		if(obj == this)
 			return true;
 		
-		if(this.getClass() != obj.getClass())
+		if( !(obj instanceof DivisionNode))
 			return false;		
 			
 		return (this.divisionID == ((DivisionNode)obj).divisionID ? true : false);

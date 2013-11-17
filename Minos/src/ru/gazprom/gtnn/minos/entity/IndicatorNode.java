@@ -1,15 +1,24 @@
 package ru.gazprom.gtnn.minos.entity;
 
+import ru.gazprom.gtnn.minos.annotations.TableColumn;
+import ru.gazprom.gtnn.minos.annotations.TableName;
+
+@TableName(name = "IndicatorTable")
 public class IndicatorNode {
-	public int id;
-	public String name;
-	public int item;
-	public int levelID;
-	public int competenceIncarnatio;
+	@TableColumn
+	public int indicatorID;
+	@TableColumn
+	public String indicatorName;
+	@TableColumn
+	public int indicatorItem;
+	@TableColumn
+	public int indicatorLevelID;
+	@TableColumn
+	public int indicatorCompetenceIncarnatio;
 
 	@Override
 	public String toString() {
-		return name;
+		return indicatorName;
 	}
 
 	@Override
@@ -22,11 +31,11 @@ public class IndicatorNode {
 		if( !(obj instanceof IndicatorNode))
 			return false;		
 			
-		return (this.id == ((IndicatorNode)obj).id ? true : false);
+		return (this.indicatorID == ((IndicatorNode)obj).indicatorID ? true : false);
 	}
 
 	@Override
 	public int hashCode() {		
-		return id;
+		return indicatorID;
 	}
 }

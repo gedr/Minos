@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
@@ -130,18 +129,6 @@ public class PositionInDivisionModel extends BasicModel implements TreeModel {
 			return ind;		
 		
 		return (flagPositionBeforeSubDivision ? ind : ind + division.getChildCount(parent));
-	}
-	
-	@Override
-	public void addTreeModelListener(TreeModelListener arg0) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void removeTreeModelListener(TreeModelListener arg0) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override

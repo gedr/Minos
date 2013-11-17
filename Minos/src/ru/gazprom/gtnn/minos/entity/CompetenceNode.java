@@ -2,19 +2,31 @@ package ru.gazprom.gtnn.minos.entity;
 
 import java.util.List;
 
+import ru.gazprom.gtnn.minos.annotations.TableColumn;
+import ru.gazprom.gtnn.minos.annotations.TableName;
+
+@TableName(name = "CompetenceTable")
 public class CompetenceNode {
-	public int id;
-	public String name;
-	public String descr;
-	public int item;
-	public int catalogID;
-	public int incarnatio;
-	public int chainNumber;
+	@TableColumn
+	public int competenceID;
+	@TableColumn
+	public String competenceName;
+	@TableColumn
+	public String competenceDescr;
+	@TableColumn
+	public int competenceItem;
+	@TableColumn
+	public int competenceCatalogID;
+	@TableColumn
+	public int competenceIncarnatio;
+	@TableColumn
+	public int competenceChainNumber;
+	
 	public List<Integer> indicators;		
 
 	@Override
 	public String toString() {
-		return name;
+		return competenceName;
 	}
 	
 	@Override
@@ -27,11 +39,11 @@ public class CompetenceNode {
 		if( !(obj instanceof CompetenceNode))
 			return false;		
 			
-		return (this.id == ((CompetenceNode)obj).id ? true : false);
+		return (this.competenceID == ((CompetenceNode)obj).competenceID ? true : false);
 	}
 
 	@Override
 	public int hashCode() {		
-		return id;
+		return competenceID;
 	}
 }

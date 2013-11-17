@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.swing.event.EventListenerList;
+import javax.swing.event.TreeModelListener;
+
 import com.google.common.base.Preconditions;
 
 import ru.gazprom.gtnn.minos.util.DatabaseConnectionKeeper;
@@ -13,6 +16,7 @@ public abstract class BasicModel {
 	public BasicModel(DatabaseConnectionKeeper kdb) {
 		super();
 		this.kdb = kdb;
+		listenerList = new EventListenerList();
 	}
 
 	protected <T, P> List<T> loadChildIDs(String sql, String pattern, P parentID) {		
@@ -42,6 +46,27 @@ public abstract class BasicModel {
 		}		
 		return lst;
 	}	
+	
+	  /**
+     * Adds a listener for the TreeModelEvent posted after the tree changes.
+     *
+     * @see     #removeTreeModelListener
+     * @param   l       the listener to add
+     */
+    public void addTreeModelListener(TreeModelListener l) {
+        listenerList.add(TreeModelListener.class, l);
+    }
+
+    /**
+     * Removes a listener previously added with <B>addTreeModelListener()</B>.
+     *
+     * @see     #addTreeModelListener
+     * @param   l       the listener to remove
+     */
+    public void removeTreeModelListener(TreeModelListener l) {
+        listenerList.remove(TreeModelListener.class, l);
+    }
 
 	protected DatabaseConnectionKeeper kdb;
+	protected EventListenerList listenerList;
 }

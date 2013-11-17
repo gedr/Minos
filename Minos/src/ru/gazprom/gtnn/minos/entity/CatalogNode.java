@@ -2,16 +2,25 @@ package ru.gazprom.gtnn.minos.entity;
 
 import java.util.List;
 
+import ru.gazprom.gtnn.minos.annotations.TableColumn;
+import ru.gazprom.gtnn.minos.annotations.TableName;
+
+@TableName(name = "CatalogTable")
 public class CatalogNode {
-	public int id;
-	public String name;
-	public int parent;
-	public int item;
+	@TableColumn
+	public int catalogID;
+	@TableColumn
+	public String catalogName;
+	@TableColumn
+	public int catalogParent;
+	@TableColumn
+	public int catalogItem;
+	
 	public List<Integer> subCatalogs;
 
 	@Override
 	public String toString() {
-		return name; // + (catalogs == null ? "  :  catalogs is null" : "  :  catalog.size() = " + catalogs.size());
+		return catalogName;
 	}
 
 	@Override
@@ -24,11 +33,11 @@ public class CatalogNode {
 		if( !(obj instanceof CatalogNode) )
 			return false;
 		
-		return (this.id == ((CatalogNode)obj).id ? true : false);
+		return (this.catalogID == ((CatalogNode)obj).catalogID ? true : false);
 	}
 
 	@Override
 	public int hashCode() {		
-		return id;
+		return catalogID;
 	}
 }

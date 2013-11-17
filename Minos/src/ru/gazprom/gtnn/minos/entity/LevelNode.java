@@ -1,9 +1,16 @@
 package ru.gazprom.gtnn.minos.entity;
 
+import ru.gazprom.gtnn.minos.annotations.TableColumn;
+import ru.gazprom.gtnn.minos.annotations.TableName;
+
+@TableName(name = "LevelTable")
 public class LevelNode {
-	public int id;
-	public String name;
-	public double price;
+	@TableColumn
+	public int levelID;
+	@TableColumn
+	public String levelName;
+	@TableColumn
+	public double levelPrice;
 	
 	@Override
 	public boolean equals(Object obj) {
@@ -15,16 +22,16 @@ public class LevelNode {
 		if( !(obj instanceof LevelNode))
 			return false;		
 			
-		return (this.id == ((LevelNode)obj).id ? true : false);
+		return (this.levelID == ((LevelNode)obj).levelID ? true : false);
 	}
 
 	@Override
 	public int hashCode() {		
-		return id;
+		return levelID;
 	}
 
 	@Override
 	public String toString() {
-		return name;
+		return levelName;
 	}
 }

@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
@@ -82,24 +81,11 @@ public class PersonInDivisionModel extends BasicModel implements TreeModel {
 		DivisionNode node = (DivisionNode)parent;
 		List<Integer> lst = checkAndLoadPerson(node);
 
-		System.out.println(node);
-		System.out.println(lst);
 		Object obj =  null;
 		try {
 			if(flagPersonBeforeSubDivision) {
-				if( (0 <= index) && (index < lst.size()) )  {
-					System.out.println("cachePerson.get(" + lst.get(index) + ")");							
-					obj = cachePerson.get(lst.get(index));
-				} else {
-					System.out.println("division.getChild(parent, index - lst.size())");
-					obj = division.getChild(parent, index - lst.size()) ;
-				}
-				
-				/*
 				obj = ( ((0 <= index) && (index < lst.size())) ? cachePerson.get(lst.get(index))
-						: );
-						
-						*/
+						: division.getChild(parent, index - lst.size()) );
 			} else { 
 				obj = (((0 <= index) && (index < division.getChildCount(parent))) ? division.getChild(parent, index)						
 						: cachePerson.get(lst.get(index - division.getChildCount(parent))) );
@@ -143,18 +129,6 @@ public class PersonInDivisionModel extends BasicModel implements TreeModel {
 			return ind;		
 
 		return (flagPersonBeforeSubDivision ? ind : ind + division.getChildCount(parent));
-	}
-
-	@Override
-	public void addTreeModelListener(TreeModelListener arg0) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void removeTreeModelListener(TreeModelListener arg0) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override

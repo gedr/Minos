@@ -2,7 +2,6 @@ package ru.gazprom.gtnn.minos.models;
 
 import java.util.concurrent.ExecutionException;
 
-import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
@@ -49,7 +48,9 @@ public class DivisionModel extends BasicModel implements TreeModel {
 
 	@Override
 	public boolean isLeaf(Object arg) {
-		assert arg instanceof DivisionNode : "DivisionTreeModel.isLeaf() : arg have incorrect type";
+		if(arg == null)
+			return true;
+		assert arg instanceof DivisionNode : "DivisionModel.isLeaf() : arg have incorrect type";
 		if(!(arg instanceof DivisionNode))
 			return true;		
 		
@@ -61,7 +62,7 @@ public class DivisionModel extends BasicModel implements TreeModel {
 
 	@Override
 	public int getChildCount(Object arg) {
-		assert arg instanceof DivisionNode : "DivisionTreeModel.getChildCount() : arg have incorrect type";
+		assert arg instanceof DivisionNode : "DivisionModel.getChildCount() : arg have incorrect type";
 		if(!(arg instanceof DivisionNode))
 			return 0;
 		
@@ -73,7 +74,10 @@ public class DivisionModel extends BasicModel implements TreeModel {
 
 	@Override
 	public Object getChild(Object arg, int index) {
-		assert arg instanceof DivisionNode : "DivisionTreeModel.getChild() : arg have incorrect type";
+		if(arg == null)
+			return null;
+		
+		assert arg instanceof DivisionNode : "DivisionModel.getChild() : arg have incorrect type";
 
 		if(!(arg instanceof DivisionNode))
 			return null;
@@ -81,7 +85,7 @@ public class DivisionModel extends BasicModel implements TreeModel {
 		DivisionNode node = (DivisionNode)arg;
 		checkAndLoadSubDivisions(node);
 		
-		assert ((0 <= index) && (index < node.subDivisions.size())) : "DivisionTreeModel.getChild() : index out of range";
+		assert ((0 <= index) && (index < node.subDivisions.size())) : "DivisionModel.getChild() : index out of range";
 		if((index < 0) || (index >= node.subDivisions.size()))
 			return null;		
 		
@@ -100,8 +104,8 @@ public class DivisionModel extends BasicModel implements TreeModel {
 		if(parent == null || child == null)
             return -1;
 		
-		assert parent instanceof DivisionNode : "DivisionTreeModel.getIndexOfChild() : parent have incorrect type";
-		assert child instanceof DivisionNode : "DivisionTreeModel.getIndexOfChild() : parent have incorrect type";
+		assert parent instanceof DivisionNode : "DivisionModel.getIndexOfChild() : parent have incorrect type";
+		assert child instanceof DivisionNode : "DivisionModel.getIndexOfChild() : parent have incorrect type";
 		if( !( (parent instanceof DivisionNode) && (child instanceof DivisionNode) ) )
 			return -1;
 		
@@ -117,20 +121,9 @@ public class DivisionModel extends BasicModel implements TreeModel {
 				break;
 			}
 		}
+		assert offs != -1 : "DivisionModel.getIndexOfChild() : childNode cann't find in parentNode.catalogs";
 		
 		return offs;
-	}
-
-	@Override
-	public void addTreeModelListener(TreeModelListener l) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void removeTreeModelListener(TreeModelListener l) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override

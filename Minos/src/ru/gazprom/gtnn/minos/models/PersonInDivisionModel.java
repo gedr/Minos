@@ -14,7 +14,7 @@ import ru.gazprom.gtnn.minos.util.DatabaseConnectionKeeper;
 
 import com.google.common.cache.LoadingCache;
 
-public class PersonInDivisionModel extends BasicModel implements TreeModel {
+public class PersonInDivisionModel extends BasicModel {
 
 	public PersonInDivisionModel(DatabaseConnectionKeeper kdb,
 			LoadingCache<Integer, PersonNode> cachePerson,

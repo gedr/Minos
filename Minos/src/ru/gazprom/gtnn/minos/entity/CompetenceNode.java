@@ -1,5 +1,6 @@
 package ru.gazprom.gtnn.minos.entity;
 
+import java.util.Date;
 import java.util.List;
 
 import ru.gazprom.gtnn.minos.annotations.TableColumn;
@@ -21,6 +22,11 @@ public class CompetenceNode {
 	public int competenceIncarnatio;
 	@TableColumn
 	public int competenceChainNumber;
+	@TableColumn
+	public java.sql.Date competenceCreate;
+	@TableColumn
+	public java.sql.Date competenceRemove;
+	
 	
 	public List<Integer> indicators;		
 

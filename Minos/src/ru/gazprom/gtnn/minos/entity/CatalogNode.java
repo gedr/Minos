@@ -1,5 +1,6 @@
 package ru.gazprom.gtnn.minos.entity;
 
+import java.util.Date;
 import java.util.List;
 
 import ru.gazprom.gtnn.minos.annotations.TableColumn;
@@ -15,12 +16,16 @@ public class CatalogNode {
 	public int catalogParent;
 	@TableColumn
 	public int catalogItem;
+	@TableColumn
+	public Date catalogCreate;
+	@TableColumn
+	public Date catalogRemove;
 	
 	public List<Integer> subCatalogs;
 
 	@Override
 	public String toString() {
-		return catalogName;
+		return catalogName + " [ " + catalogCreate + " ] " + " [ " + catalogRemove + " ] ";
 	}
 
 	@Override

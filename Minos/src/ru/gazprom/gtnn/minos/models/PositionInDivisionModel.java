@@ -13,7 +13,7 @@ import ru.gazprom.gtnn.minos.util.DatabaseConnectionKeeper;
 
 import com.google.common.cache.LoadingCache;
 
-public class PositionInDivisionModel extends BasicModel implements TreeModel {
+public class PositionInDivisionModel extends BasicModel {
 
 	public PositionInDivisionModel(DatabaseConnectionKeeper kdb,
 			LoadingCache<Integer, PositionNode> cachePosition,

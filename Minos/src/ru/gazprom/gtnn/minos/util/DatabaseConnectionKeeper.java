@@ -2,10 +2,12 @@ package ru.gazprom.gtnn.minos.util;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 
 
 public class DatabaseConnectionKeeper {	
@@ -154,7 +156,82 @@ public class DatabaseConnectionKeeper {
 		closeStatement(stmt);
 		return tk;
 	}
+
+	public static class RecordFeld {
+		public int dataType;
+		public String columnName;
+		public Object val;
 		
+		public RecordFeld(int dataType, String columnName, Object val) {
+			this.dataType = dataType;
+			this.columnName = columnName;
+			this.val = val;
+		}
+	};
+	
+	public int insertRow(boolean flagHaveAutoIncrementKey, String tableName, List<RecordFeld> vals) throws Exception {
+		String sql = makePreparedSQL(tableName, vals);
+		PreparedStatement stmt = (!flagHaveAutoIncrementKey ? con.prepareStatement(sql)
+				: con.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS) );
+		
+		for(int i = 0; i < vals.size(); i++) {
+			stmt.setObject(i + 1, vals.get(i).val);	
+		}
+		stmt.executeUpdate();
+		
+		int key = 0;
+		if(flagHaveAutoIncrementKey) {
+			ResultSet keys = stmt.getGeneratedKeys(); 
+			keys.next(); 
+			key = keys.getInt(1);
+			closeResultSet(keys);
+		}
+
+		closeStatement(stmt);		
+		return key;
+	}
+	
+	public int updateRow(String tableName, List<RecordFeld> vals, RecordFeld whereVal) throws Exception {
+		StringBuilder sb = new StringBuilder();
+		sb.append("UPDATE ").append(tableName).append(" SET ");
+		boolean flagFirst = true;
+		for(int i = 0; i < vals.size(); i++) {
+			sb.append(flagFirst ? "" : " , ").append(vals.get(i).columnName).append(" = ? ");
+			flagFirst = false;
+		}
+		sb.append(" WHERE ").append(whereVal.columnName).append(" = ? ");
+
+		PreparedStatement stmt = con.prepareStatement(sb.toString());
+
+		for(int i = 0; i < vals.size(); i++) {
+			stmt.setObject(i + 1, vals.get(i).val);	
+		}
+		stmt.setObject(vals.size() + 1, whereVal.val);
+		
+		int result = stmt.executeUpdate();
+		closeStatement(stmt);
+		
+		return result;
+	}
+	
+	private String makePreparedSQL(String tableName, List<RecordFeld> vals) {
+		StringBuilder sb1 = new StringBuilder();
+		StringBuilder sb2 = new StringBuilder();
+		sb1.append(" INSERT INTO ").append(tableName).append(" ( ");
+		sb2.append(" VALUES ( ");
+		boolean flagFirst = true;
+		for(int i = 0; i < vals.size(); i++) {
+			sb1.append(flagFirst ? "" : " , ").append(vals.get(i).columnName);
+			sb2.append(flagFirst ? "" : " , ").append(" ? ");
+			flagFirst = false;
+		}
+		sb1.append(" ) ");
+		sb2.append(" ) ");
+		
+		return sb1.append(sb2).toString();
+	}
+	
+	
 	private void closeStatement(Statement st) {
 		if (st != null) {
 			try {

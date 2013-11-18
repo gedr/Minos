@@ -1,28 +1,53 @@
 package ru.gazprom.gtnn.minos.main;
 
 
+import java.awt.BorderLayout;
 import java.awt.EventQueue;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.sql.Date;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.swing.DropMode;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.JToolBar;
 import javax.swing.JTree;
 import javax.swing.TransferHandler;
+import javax.swing.UIManager;
+import javax.swing.UIManager.LookAndFeelInfo;
+import javax.swing.table.DefaultTableColumnModel;
+import javax.swing.table.TableColumnModel;
+import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeModel;
 
 import com.google.common.cache.*;
 
 import ru.gazprom.gtnn.minos.annotations.TableColumn;
 import ru.gazprom.gtnn.minos.entity.*;
+import ru.gazprom.gtnn.minos.models.BasicModel;
 import ru.gazprom.gtnn.minos.models.CatalogModel;
+import ru.gazprom.gtnn.minos.models.CompetenceAndCatalog;
 import ru.gazprom.gtnn.minos.models.CompetenceModel;
 import ru.gazprom.gtnn.minos.models.DivisionModel;
+import ru.gazprom.gtnn.minos.models.MinosTreeRenderer;
 import ru.gazprom.gtnn.minos.models.MyTransferHandler;
 import ru.gazprom.gtnn.minos.models.PersonInDivisionModel;
 import ru.gazprom.gtnn.minos.models.PositionInDivisionModel;
@@ -56,6 +81,8 @@ public class Start {
 				map.put("catalogName", "name");
 				map.put("catalogParent", "parent");
 				map.put("catalogItem", "item");
+				map.put("catalogCreate", "date_create");
+				map.put("catalogRemove", "date_remove");
 				
 				map.put("competenceID", "id");
 				map.put("competenceName", "name");
@@ -114,7 +141,7 @@ public class Start {
 				LoadingCache<Integer, CatalogNode> cacheCatalog = CacheBuilder.
 						newBuilder().
 						build(new MinosCacheLoader<Integer, CatalogNode>(CatalogNode.class, kdbM, 
-								"select id, name, item, parent from CATALOG where id in (%id%) order by item",
+								"select id, name, item, parent, date_create, date_remove from CATALOG where id in (%id%) order by item",
 								"%id%", map));
 
 				LoadingCache<Integer, CompetenceNode> cacheCompetence = CacheBuilder.
@@ -135,26 +162,38 @@ public class Start {
 								"select id, name, level_id, competence_incarnatio, item from INDICATOR where (id in (%id%)) and (GetDate() between date_create and date_remove) order by item",
 								"%id%", map));
 
+		
 				
-
 				
-				
-				TreeModel tmd = new DivisionModel(kdb, cacheDivision, 
+				BasicModel tmd = new DivisionModel(kdb, cacheDivision, 
 						"select tOrgStruID from tOrgStru where Parent = 0", 
 						"select tOrgStruID from tOrgStru where Parent = %id%", "%id%");
 				
-				TreeModel tmpos = new PositionInDivisionModel(kdb, cachePosition, tmd, 
+				BasicModel tmpos = new PositionInDivisionModel(kdb, cachePosition, tmd, 
 						"select distinct(tStatDolSpId) from tOrgAssignCur where tOrgStruId = %id%", 
 						"%id%", true);
 
-				TreeModel tmper = new PersonInDivisionModel(kdb, cachePerson, tmd, 
+				BasicModel tmper = new PersonInDivisionModel(kdb, cachePerson, tmd, 
 						"select tPersonaId from tOrgAssignCur where tOrgStruId = %id%", 
 						"%id%", true);
 				
-				TreeModel tmcat = new CatalogModel(kdbM, cacheCatalog, 
+				BasicModel tmcat = new CatalogModel(kdbM, cacheCatalog, 
 						"select id from CATALOG where (parent = %id%) and (GetDate() between date_create and date_remove) order by item", "%id%");
 				
-				TreeModel tmcom = new CompetenceModel(kdbM, cacheCompetence, cacheLevel, cacheIndicator, "select 1", "select id from INDICATOR where competence_incarnatio = %id%", "%id%");
+				BasicModel tmcom = new CompetenceModel(kdbM, cacheCompetence, cacheLevel, cacheIndicator, "select 1", "select id from INDICATOR where competence_incarnatio = %id%", "%id%");
+
+				BasicModel tmcc = new CompetenceAndCatalog(kdbM, cacheCompetence, tmcat, tmcom,
+						"select id from COMPETENCE where catalog_id = %id%", "%id%", true);
+				
+
+				TreeCellRenderer tcr = new MinosTreeRenderer();
+				
+				JTree tcc = new JTree(tmcc);
+				tcc.setRootVisible(false);				
+				tcc.setCellRenderer(tcr);
+				tcc.setDragEnabled(true);
+				tcc.setTransferHandler(new MyTransferHandler("tcc"));
+				tcc.setDropMode(DropMode.ON);
 				
 				JTree tcat = new JTree(tmcat);
 				tcat.setRootVisible(false);
@@ -166,6 +205,7 @@ public class Start {
 				*/
 				JTree tpos = new JTree(tmpos);
 				tpos.setName("Position in Division");
+				tpos.setCellRenderer(tcr);
 				tpos.setDragEnabled(true);
 				tpos.setTransferHandler(new MyTransferHandler("tpos"));
 				tpos.setDropMode(DropMode.ON);
@@ -176,33 +216,229 @@ public class Start {
 				tcom.setTransferHandler(new MyTransferHandler("tcom"));
 				tcom.setDropMode(DropMode.ON);
 				
-				JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
-						new JScrollPane(tcom), 
+	
+				
+				JToolBar tb = new JToolBar();
+				JButton btnRefreshCatalog = new JButton("refresh catalog");
+				btnRefreshCatalog.addActionListener(new MyListener(tcc));
+				
+				
+				JButton btnAddCatalog = new JButton("add catalog");
+				btnAddCatalog.addActionListener(new MyListener2(tcc));
+
+				JButton btnAddCompetence = new JButton("add competence");
+				btnAddCompetence.addActionListener(new MyListener3(tcc));
+
+				tb.add(btnAddCatalog);
+				tb.add(btnAddCompetence);
+				tb.add(btnRefreshCatalog);
+				
+				JPanel pan = new JPanel(new BorderLayout());
+				pan.add(new JScrollPane(tcc), BorderLayout.CENTER);
+				pan.add(tb, BorderLayout.NORTH);
+
+				
+				JSplitPane split1 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
+						pan,  //tcom), 
 						new JScrollPane(tpos));
 
+				JSplitPane split2 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
+						new JScrollPane(new JTree(tmpos)), new JScrollPane(tper));
+				
+				
+				JSplitPane splitPane3 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, new JScrollPane(new JTree(tmper)), new JScrollPane(new JTree(tmper)));
+				splitPane3.setDividerLocation(0.5);
+				
+				JPanel roundRating = new JPanel();
+				roundRating.setLayout(new BorderLayout());
+				
+				JToolBar tb2 = new JToolBar();
+				tb2.add(new JButton("Add Round"));
+				tb2.add(new JComboBox<String>());
+				
+				roundRating.add(tb2, BorderLayout.NORTH);
+				roundRating.add(new JLabel("Раунд оценки: ???, название: ???,  приказ: ???, дата начала: ???, дата конца: ???"), BorderLayout.SOUTH);
+				
+				
+				
+				JTable table = new JTable(3, 2);				
+				roundRating.add(new JScrollPane(table));
+				
+							
+				JSplitPane split4 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, splitPane3, roundRating);
+				split4.setDividerLocation(300);
+
+				
+				
+				JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+				tabbedPane.addTab("компетенция - профиль", split1);
+				tabbedPane.addTab("профиль - сотрудник", split2);
+				tabbedPane.addTab("эксперт - испытуемый", split4);
+				
 				JFrame frm = new JFrame("test");
+				frm.add(tabbedPane);
+				frm.add(tb, BorderLayout.NORTH);
+
 				frm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-				
-				frm.add(split);
 				frm.pack();
-				frm.setVisible(true);
-				
-			
+				frm.setVisible(true);			
 			
 			}
 		});
 		
 	}
 	
-	public static class myTransferHandler extends TransferHandler {
+	static class MyListener implements ActionListener {
+		private JTree t;
+		public MyListener(JTree t) {
+			this.t = t;
+		}
 
-		private static final long serialVersionUID = 1L;
-		
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			((BasicModel)t.getModel()).reload();
+			t.updateUI();
+			
+		}		
+	}
+
+	static class MyListener2 implements ActionListener {
+		private JTree t;
+		public MyListener2(JTree t) {
+			this.t = t;
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			String inputValue = JOptionPane.showInputDialog("Please input a value");     
+			System.out.println(inputValue);
+			if(inputValue != null) {
+				CatalogNode cn = new CatalogNode();
+				cn.catalogID = 1;
+				cn.catalogName = inputValue;
+				cn.catalogItem = 1;
+				cn.catalogCreate = new Date(System.currentTimeMillis());
+				cn.catalogRemove = new Date(BasicModel.endTime.getTime());
+				
+				try {
+					((BasicModel) t.getModel()).add(cn, t.getSelectionPath());
+				} catch (Exception e2) {
+					e2.printStackTrace();
+				}
+			}
+			//t.updateUI();
+			
+		}		
+	}
+
+	
+	static class MyListener3 implements ActionListener {
+		private JTree t;
+		public MyListener3(JTree t) {
+			this.t = t;
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			JTextField nameField = new JTextField();
+			JTextArea descrField = new JTextArea(10, 100);
+			
+			final JComponent[] inputs = new JComponent[] {
+					new JLabel("Name"),
+					nameField,
+					new JLabel("Descr"),
+					descrField,
+			};
+			if( (JOptionPane.OK_OPTION == JOptionPane.showOptionDialog(null, inputs, "Competence dialog", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null)) &&
+					(!nameField.getText().isEmpty()) ) {
+				
+				CompetenceNode cn = new CompetenceNode();
+				cn.competenceName = nameField.getText(); 
+				cn.competenceDescr = descrField.getText();
+				cn.competenceItem = 1;
+				cn.competenceCreate = new Date(System.currentTimeMillis());
+				cn.competenceRemove = new Date(BasicModel.endTime.getTime());
+				
+				try {
+					((BasicModel) t.getModel()).add(cn, t.getSelectionPath());
+				} catch (Exception e2) {
+					e2.printStackTrace();
+				}
+			}
+				
+			//JOptionPane.showMessageDialog(null, inputs, "Competence dialog", JOptionPane.QUESTION_MESSAGE);
+			return ;
+		}		
+	}
+	
+	
+
+	
+	public static void setLaF(String name) {
+		LookAndFeelInfo[] lfis = UIManager.getInstalledLookAndFeels();
+		boolean fOk = false;
+		for(LookAndFeelInfo lfi : lfis) {			
+			if(lfi.getName().contains(name)) {
+				try {
+					UIManager.setLookAndFeel(lfi.getClassName());
+					fOk = true;					
+					break;
+				} catch(Exception e) {					
+					fOk = false;
+					break;
+				}				
+			}
+		}	
+		System.out.println(name + (fOk ? " LaF set ok " : " LaF cannot set "));
+	}
+	
+	
+	public static void test()  {
+		try {
+			String connectionUrl = "jdbc:sqlserver://192.168.56.2:1433;databaseName=Minos;user=sa;password=Q11W22e33;";
+			Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+			DatabaseConnectionKeeper kdb = new DatabaseConnectionKeeper(
+					connectionUrl, null, null);
+			kdb.connect();
+			int key = kdb.insertRow(true, "CATALOG", 
+					Arrays.asList(new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "name", "Test"),
+					new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "parent", Integer.valueOf(10)),
+					new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "item", Integer.valueOf(1)),
+					new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "date_create", new java.sql.Date(1)),
+					new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "date_remove", new java.sql.Date(1000))
+					));
+			System.out.println(key);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		 
 	}
 		
 	
+	
+	public static void test2()  {
+		try {
+			String connectionUrl = "jdbc:sqlserver://192.168.56.2:1433;databaseName=Minos;user=sa;password=Q11W22e33;";
+			Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+			DatabaseConnectionKeeper kdb = new DatabaseConnectionKeeper(
+					connectionUrl, null, null);
+			kdb.connect();
+			int key = kdb.updateRow("CATALOG", 
+					Arrays.asList(new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "name", "TestUpdate"),
+							new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "item", Integer.valueOf(100))),
+							new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "id", Integer.valueOf(14)));
+					
+			System.out.println(key);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		 
+	}
+	
 	public static void main(String[] args) {
 		//PersonNode node =  new PersonNode();
+		//test2();
+		//setLaF("Nimbus");
 		makeUI();
 		if(true)
 			return;
@@ -255,4 +491,5 @@ public class Start {
 	}
 
 }
+
 

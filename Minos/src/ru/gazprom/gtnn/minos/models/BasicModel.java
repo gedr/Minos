@@ -1,24 +1,42 @@
 package ru.gazprom.gtnn.minos.models;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import javax.swing.event.EventListenerList;
 import javax.swing.event.TreeModelListener;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreePath;
 
 import com.google.common.base.Preconditions;
 
 import ru.gazprom.gtnn.minos.util.DatabaseConnectionKeeper;
 import ru.gazprom.gtnn.minos.util.TableKeeper;
 
-public abstract class BasicModel {
+public abstract class BasicModel implements TreeModel{
+	public static java.util.Date endTime;
+	static {		
+		DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+		try {
+			endTime = (java.util.Date) df.parse("9999-12-31");
+		} catch(ParseException e) {
+			e.printStackTrace();
+		}
+	}
+
 	public BasicModel(DatabaseConnectionKeeper kdb) {
 		super();
 		this.kdb = kdb;
 		listenerList = new EventListenerList();
 	}
 
+	public void reload() { }
+	public void add(Object obj, TreePath path) throws Exception{}
+	
 	protected <T, P> List<T> loadChildIDs(String sql, String pattern, P parentID) {		
 		List<T> lst = Collections.emptyList();
 		try {			

@@ -12,7 +12,7 @@ import ru.gazprom.gtnn.minos.entity.DivisionNode;
 import ru.gazprom.gtnn.minos.util.DatabaseConnectionKeeper;
 import ru.gazprom.gtnn.minos.util.TableKeeper;
 
-public class DivisionModel extends BasicModel implements TreeModel {
+public class DivisionModel extends BasicModel {
 
 	public DivisionModel(DatabaseConnectionKeeper kdb,
 			LoadingCache<Integer, DivisionNode> cacheDivision,

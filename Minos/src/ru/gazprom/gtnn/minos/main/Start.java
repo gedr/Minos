@@ -21,7 +21,6 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
@@ -30,21 +29,17 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.JTree;
-import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.table.DefaultTableColumnModel;
-import javax.swing.table.TableColumnModel;
 import javax.swing.tree.TreeCellRenderer;
-import javax.swing.tree.TreeModel;
 
 import com.google.common.cache.*;
 
-import ru.gazprom.gtnn.minos.annotations.TableColumn;
 import ru.gazprom.gtnn.minos.entity.*;
 import ru.gazprom.gtnn.minos.models.BasicModel;
 import ru.gazprom.gtnn.minos.models.CatalogModel;
 import ru.gazprom.gtnn.minos.models.CompetenceAndCatalog;
+import ru.gazprom.gtnn.minos.models.CompetenceAndPositionInDivisionModel;
 import ru.gazprom.gtnn.minos.models.CompetenceModel;
 import ru.gazprom.gtnn.minos.models.DivisionModel;
 import ru.gazprom.gtnn.minos.models.MinosTreeRenderer;
@@ -77,31 +72,46 @@ public class Start {
 				map.put("personBirthDate", "Drojd");
 				map.put("personSex", "Sex");
 				
+				map.put("CatalogTable", "CATALOG");
 				map.put("catalogID", "id");
 				map.put("catalogName", "name");
+				map.put("catalogHost", "host");
+				map.put("catalogMode", "mode");
 				map.put("catalogParent", "parent");
 				map.put("catalogItem", "item");
 				map.put("catalogCreate", "date_create");
 				map.put("catalogRemove", "date_remove");
 				
+				map.put("CompetenceTable", "COMPETENCE");
 				map.put("competenceID", "id");
 				map.put("competenceName", "name");
+				map.put("competenceHost", "host");
+				map.put("competenceMode", "mode");
 				map.put("competenceDescr", "description");
 				map.put("competenceItem", "item");
 				map.put("competenceCatalogID", "catalog_id");
 				map.put("competenceIncarnatio", "incarnatio");
 				map.put("competenceChainNumber", "chain_number");
+				map.put("competenceCreate", "date_create");
+				map.put("competenceRemove", "date_remove");
 				
 				map.put("levelID", "id");
 				map.put("levelName", "name");
 				map.put("levelPrice", "price");
 				
+				map.put("IndicatorTable", "INDICATOR");
 				map.put("indicatorID", "id");
 				map.put("indicatorName", "name");
 				map.put("indicatorItem", "item");
 				map.put("indicatorLevelID", "level_id");
 				map.put("indicatorCompetenceIncarnatio", "competence_incarnatio");
+				map.put("indicatorCreate", "date_create");
+				map.put("indicatorRemove", "date_remove");
+				map.put("indicatorHost", "host");
 				
+				CatalogNode.names = map;
+				CompetenceNode.names = map;
+				IndicatorNode.names = map;
 			
 				
 				
@@ -141,13 +151,13 @@ public class Start {
 				LoadingCache<Integer, CatalogNode> cacheCatalog = CacheBuilder.
 						newBuilder().
 						build(new MinosCacheLoader<Integer, CatalogNode>(CatalogNode.class, kdbM, 
-								"select id, name, item, parent, date_create, date_remove from CATALOG where id in (%id%) order by item",
+								"select id, name, item, parent, host, mode, date_create, date_remove from CATALOG where id in (%id%) order by item",
 								"%id%", map));
 
 				LoadingCache<Integer, CompetenceNode> cacheCompetence = CacheBuilder.
 						newBuilder().
 						build(new MinosCacheLoader<Integer, CompetenceNode>(CompetenceNode.class, kdbM, 
-								"select id, incarnatio, chain_number, name, description, catalog_id, item from COMPETENCE where (id in (%id%)) and (GetDate() between date_create and date_remove) order by item",
+								"select id, incarnatio, chain_number, name, description, catalog_id, item, date_create, date_remove from COMPETENCE where (id in (%id%)) and (GetDate() between date_create and date_remove) order by item",
 								"%id%", map));
 
 				LoadingCache<Integer, LevelNode> cacheLevel = CacheBuilder.
@@ -159,10 +169,8 @@ public class Start {
 				LoadingCache<Integer, IndicatorNode> cacheIndicator = CacheBuilder.
 						newBuilder().
 						build(new MinosCacheLoader<Integer, IndicatorNode>(IndicatorNode.class, kdbM, 
-								"select id, name, level_id, competence_incarnatio, item from INDICATOR where (id in (%id%)) and (GetDate() between date_create and date_remove) order by item",
+								"select id, name, level_id, competence_incarnatio, item, date_create, date_remove, host  from INDICATOR where (id in (%id%)) and (GetDate() between date_create and date_remove) order by item",
 								"%id%", map));
-
-		
 				
 				
 				BasicModel tmd = new DivisionModel(kdb, cacheDivision, 
@@ -173,8 +181,8 @@ public class Start {
 						"select distinct(tStatDolSpId) from tOrgAssignCur where tOrgStruId = %id%", 
 						"%id%", true);
 
-				BasicModel tmper = new PersonInDivisionModel(kdb, cachePerson, tmd, 
-						"select tPersonaId from tOrgAssignCur where tOrgStruId = %id%", 
+				BasicModel tmper = new PersonInDivisionModel(kdb, cachePerson, cachePosition, tmd, 
+						"select tPersonaId, tStatDolSpId from tOrgAssignCur where tOrgStruId = %id%", 
 						"%id%", true);
 				
 				BasicModel tmcat = new CatalogModel(kdbM, cacheCatalog, 
@@ -184,7 +192,17 @@ public class Start {
 
 				BasicModel tmcc = new CompetenceAndCatalog(kdbM, cacheCompetence, tmcat, tmcom,
 						"select id from COMPETENCE where catalog_id = %id%", "%id%", true);
-				
+
+				String[] arr = {"%id1%", "%id2%"};
+				BasicModel tcpd = new CompetenceAndPositionInDivisionModel(kdbM, cacheCompetence, tmper, tmcom,
+						"select distinct(c.id) from PROFILE p " +
+								" join PROFILE_COMPETENCE pc on pc.profile_id = p.id and GETDATE() between pc.date_create and pc.date_remove " +
+								" join COMPETENCE c on c.incarnatio = pc.competence_incarnatio " +
+								" where GETDATE() between  c.date_create and c.date_remove " +
+								" and p.division_id = %id1% " + 
+								" and p.position_id = %id2% ",
+								arr);
+
 
 				TreeCellRenderer tcr = new MinosTreeRenderer();
 				
@@ -194,11 +212,14 @@ public class Start {
 				tcc.setDragEnabled(true);
 				tcc.setTransferHandler(new MyTransferHandler("tcc"));
 				tcc.setDropMode(DropMode.ON);
+				tcc.setName("CompetenceAndCatalog");
 				
 				JTree tcat = new JTree(tmcat);
 				tcat.setRootVisible(false);
+				tcat.setName("Catalog");
 				
 				JTree tper = new JTree(tmper);
+				tper.setName("PersonInDivision");
 				/*
 				tper.setDragEnabled(true);
 				tper.setTransferHandler();
@@ -209,12 +230,14 @@ public class Start {
 				tpos.setDragEnabled(true);
 				tpos.setTransferHandler(new MyTransferHandler("tpos"));
 				tpos.setDropMode(DropMode.ON);
+				tpos.setName("PositionInDivision");
 				
 				JTree tcom = new JTree(tmcom);
 				tcom.setName("Competence");
 				tcom.setDragEnabled(true);
 				tcom.setTransferHandler(new MyTransferHandler("tcom"));
 				tcom.setDropMode(DropMode.ON);
+				tcom.setName("Competence");
 				
 	
 				
@@ -229,9 +252,14 @@ public class Start {
 				JButton btnAddCompetence = new JButton("add competence");
 				btnAddCompetence.addActionListener(new MyListener3(tcc));
 
+				JButton btnAddIndicator = new JButton("add indicator");
+				btnAddIndicator.addActionListener(new MyListener4(tcc));
+
+				
 				tb.add(btnAddCatalog);
 				tb.add(btnAddCompetence);
 				tb.add(btnRefreshCatalog);
+				tb.add(btnAddIndicator);
 				
 				JPanel pan = new JPanel(new BorderLayout());
 				pan.add(new JScrollPane(tcc), BorderLayout.CENTER);
@@ -274,6 +302,7 @@ public class Start {
 				tabbedPane.addTab("компетенция - профиль", split1);
 				tabbedPane.addTab("профиль - сотрудник", split2);
 				tabbedPane.addTab("эксперт - испытуемый", split4);
+				tabbedPane.addTab("check", new JScrollPane(new JTree(tcpd)));
 				
 				JFrame frm = new JFrame("test");
 				frm.add(tabbedPane);
@@ -370,7 +399,33 @@ public class Start {
 			return ;
 		}		
 	}
-	
+
+	static class MyListener4 implements ActionListener {
+		private JTree t;
+		public MyListener4(JTree t) {
+			this.t = t;
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			String inputValue = JOptionPane.showInputDialog("Please input a indicator");     
+			System.out.println(inputValue);
+			if(inputValue != null) {
+				IndicatorNode source = new IndicatorNode();								
+				source.indicatorName = inputValue;
+				source.indicatorCreate = new Date(System.currentTimeMillis());
+				source.indicatorRemove = new Date(BasicModel.endTime.getTime());
+				try {
+					((BasicModel) t.getModel()).add(source, t.getSelectionPath());
+				} catch (Exception e2) {
+					e2.printStackTrace();
+				}
+			}
+			//t.updateUI();
+			
+		}		
+	}
+
 	
 
 	

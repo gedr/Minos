@@ -20,6 +20,7 @@ public class PersonNode {
 	@TableColumn
 	public Date personBirthDate;
 	
+	public PositionNode personPosition;
 	@Override
 	public boolean equals(Object obj) {
 		if(obj == null) 
@@ -50,7 +51,8 @@ public class PersonNode {
 		append("[patronymic : ").append(personPatronymic).append(" ] ").
 		append("[ sex :").append(personSex).append(" ] ").
 		append("[ birthDate :").append(personBirthDate).append(" ] ").
-		append("[ Age : ").append(currentDate.get(Calendar.YEAR) - cal1.get(Calendar.YEAR)).append(" ] ");		
+		append("[ Age : ").append(currentDate.get(Calendar.YEAR) - cal1.get(Calendar.YEAR)).append(" ] ").
+		append("[ Position : ").append(personPosition == null ? " null" : personPosition.positionName).append(" ] ");		
 		
 		return sb.toString();
 	}

@@ -5,6 +5,7 @@ import ru.gazprom.gtnn.minos.annotations.TableName;
 
 @TableName(name = "LevelTable")
 public class LevelNode {
+	public static final int LEVEL_COUNT = 5;
 	@TableColumn
 	public int levelID;
 	@TableColumn

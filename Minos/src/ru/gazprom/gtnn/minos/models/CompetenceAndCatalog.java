@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 import ru.gazprom.gtnn.minos.entity.CatalogNode;
@@ -165,7 +164,8 @@ public class CompetenceAndCatalog extends BasicModel {
 			catalog.add(obj, path);			
 		}
 
-		if(obj instanceof CompetenceNode) {
+		if( (obj instanceof CompetenceNode) ||
+				(obj instanceof IndicatorNode) ) {
 			competence.add(obj, path);			
 		}
 

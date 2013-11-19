@@ -16,6 +16,8 @@ import com.google.common.base.Preconditions;
 
 import ru.gazprom.gtnn.minos.util.DatabaseConnectionKeeper;
 import ru.gazprom.gtnn.minos.util.TableKeeper;
+import ru.gedr.util.tuple.Pair;
+import ru.gedr.util.tuple.Unit;
 
 public abstract class BasicModel implements TreeModel{
 	public static java.util.Date endTime;
@@ -25,6 +27,7 @@ public abstract class BasicModel implements TreeModel{
 			endTime = (java.util.Date) df.parse("9999-12-31");
 		} catch(ParseException e) {
 			e.printStackTrace();
+			endTime = new java.util.Date();
 		}
 	}
 
@@ -64,7 +67,40 @@ public abstract class BasicModel implements TreeModel{
 		}		
 		return lst;
 	}	
-	
+
+	protected <P> List<Object> loadChildrenIDs(String sql, String pattern, P parentID) {		
+		List<Object> lst = Collections.emptyList();
+		try {			
+			String request = kdb.makeSQLString(sql, pattern, parentID.toString());
+			Preconditions.checkNotNull(request, "BasicModel.loadChildrenIDs() : makeSQLString return null");
+			
+			TableKeeper tk = kdb.selectRows(request);
+			if(tk == null)
+				return lst;
+
+			if(tk.getRowCount() > 0) {
+				lst = new ArrayList<>();
+				for(int i = 1; i <= tk.getRowCount(); i++) {
+					
+					switch( tk.getColumnCount() ) {
+					case 1: 
+						lst.add( new Unit<Object>(tk.getValue(i, 1)) );
+						break;
+					case 2: 
+						lst.add( new Pair<Object, Object>(tk.getValue(i, 1), tk.getValue(i, 2)) );
+						break;
+					default:
+						// not supported more dimension
+					}
+				}
+			}
+		} catch(Exception e) {
+			e.printStackTrace();
+			lst = Collections.emptyList();
+		}		
+		return lst;
+	}	
+
 	  /**
      * Adds a listener for the TreeModelEvent posted after the tree changes.
      *

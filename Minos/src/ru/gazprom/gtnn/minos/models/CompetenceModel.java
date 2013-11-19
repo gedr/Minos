@@ -1,10 +1,8 @@
 package ru.gazprom.gtnn.minos.models;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
 
-import javax.swing.tree.TreeModel;
+import javax.swing.JOptionPane;
 import javax.swing.tree.TreePath;
 
 import ru.gazprom.gtnn.minos.entity.CatalogNode;
@@ -37,8 +35,6 @@ public class CompetenceModel extends BasicModel {
 		this.sqlLoadOneCompetenceID = sqlLoadOneCompetenceID;		
 		this.sqlLoadIndicatorIDs = sqlLoadIndicatorIDs;
 		this.pattern = pattern;
-		
-		stat = new HashMap<>();
 	}		
 
 	
@@ -76,16 +72,8 @@ public class CompetenceModel extends BasicModel {
 		if(arg instanceof Pair) {
 			@SuppressWarnings("unchecked")
 			Pair<Integer, LevelNode> p = (Pair<Integer, LevelNode>) arg;
-			
-			boolean fOk = true;
-			try {
-				CountIndicatorByLevel cibl = stat.get(p.getFirst());
-				if(cibl != null)
-					fOk = cibl.level[ p.getSecond().levelID - 1 ] == 0;
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			return fOk;
+						
+			return getCountIndicatorByLevelID(p.getFirst(), p.getSecond().levelID) == 0;
 		}		
 		return true;
 	}
@@ -102,21 +90,12 @@ public class CompetenceModel extends BasicModel {
 			return 0;
 		
 		if(parent instanceof CompetenceNode)
-			return 5;				
+			return LevelNode.LEVEL_COUNT;				
 		
 		if(parent.getClass() == Pair.class) { // this is level (first is competence.id, second is LevelNode object
 			@SuppressWarnings("unchecked")
-			Pair<Integer, LevelNode> p = (Pair<Integer, LevelNode>) parent;			
-
-			int ret = 0;
-			try {
-				CountIndicatorByLevel cibl = stat.get(p.getFirst());
-				if(cibl != null)
-					ret = cibl.level[ p.getSecond().levelID - 1 ];
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			return ret;
+			Pair<Integer, LevelNode> p = (Pair<Integer, LevelNode>) parent;
+			return getCountIndicatorByLevelID(p.getFirst(), p.getSecond().levelID);
 		}
 		return 0;
 	}
@@ -212,69 +191,158 @@ public class CompetenceModel extends BasicModel {
 		
 		cacheCompetence.invalidateAll();
 		cacheIndicator.invalidateAll();
-		
-		stat.clear();
+				
 		super.reload();
 	}
 
 	
 	@Override
 	public void add(Object obj, TreePath path) throws Exception {
-		if(obj instanceof CompetenceNode) {
-			CompetenceNode cni = (CompetenceNode)obj;		
+		if(obj instanceof CompetenceNode) {				
+			if(path == null)
+				JOptionPane.showMessageDialog(null, "не выбрана позиция для вставки");
+
 			Object []nodes = path.getPath();
+			if( (nodes == null) || (nodes.length == 0) )
+				JOptionPane.showMessageDialog(null, "не выбрана позиция для вставки");
+
 			for(int i = nodes.length; i > 0; i--) {				
 				if(nodes[i - 1] instanceof CatalogNode) {
+					CompetenceNode cni = (CompetenceNode)obj;
 					CatalogNode cnt = (CatalogNode) nodes[i - 1];					
 					cni.competenceCatalogID = cnt.catalogID;
 					cni.competenceIncarnatio = 0;
-					int key = kdb.insertRow(true, "COMPETENCE", 
-							Arrays.asList(new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "name", cni.competenceName),
-									new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "description", cni.competenceDescr),
-									new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.INTEGER, "item", cni.competenceItem),
-									new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.INTEGER, "catalog_id", cni.competenceCatalogID),
-									new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.INTEGER, "incarnatio", cni.competenceIncarnatio),
-									new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.INTEGER, "chain_number", cni.competenceChainNumber),
-									new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.DATE, "date_remove", cni.competenceRemove),
-									new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.DATE, "date_create", cni.competenceCreate)
-									));
-					kdb.updateRow("COMPETENCE", 
-							Arrays.asList(new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.INTEGER, "incarnatio", key)), 
-							new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.INTEGER, "id", key));
+					CompetenceNode.insert(kdb, 
+							CompetenceNode.COMPETENCE_NAME | CompetenceNode.COMPETENCE_DESCR | CompetenceNode.COMPETENCE_ITEM | 
+							CompetenceNode.COMPETENCE_CATALOG | CompetenceNode.COMPETENCE_INCARNATIO | CompetenceNode.COMPETENCE_CHAIN_NUMBER | 
+							CompetenceNode.COMPETENCE_REMOVE | CompetenceNode.COMPETENCE_CREATE, 
+							true, cni);
 					break;
 				}				
 			}			
 		}
+		
+		if(obj instanceof IndicatorNode) {
+			if(path == null)
+				JOptionPane.showMessageDialog(null, "не выбрана позиция для вставки");
+
+			Object []nodes = path.getPath();
+			if( (nodes == null) || (nodes.length == 0) )
+				JOptionPane.showMessageDialog(null, "не выбрана позиция для вставки");
+
+			for(int i = nodes.length; i > 0; i--) {
+				if( (nodes[i - 1] instanceof CatalogNode) ||
+						(nodes[i - 1] instanceof CompetenceNode) ){
+					JOptionPane.showMessageDialog(null, "не выбрана позиция для вставки");
+					break;
+				}
+				
+				if(nodes[i - 1] instanceof Pair) {
+					@SuppressWarnings("unchecked")
+					Pair<Integer, LevelNode> p = (Pair<Integer, LevelNode>)nodes[i - 1]; 
+										
+					CompetenceNode cn = cacheCompetence.get(p.getFirst());
+					IndicatorNode source = (IndicatorNode)obj;
+					source.indicatorLevelID = p.getSecond().levelID;					
+					source.indicatorCompetenceIncarnatio = cn.competenceIncarnatio;
+					loadIndicators(p.getFirst(), false);
+					int max = 1;
+					if(cn.indicators.size() == 0) {
+						cn.indicators = new ArrayList<>();
+					} else {
+						
+						for(Integer it : cn.indicators) {
+							IndicatorNode checkIndicator = cacheIndicator.get(it);
+							if(checkIndicator == null)
+								return;
+							
+							if( (max < checkIndicator.indicatorItem) && 
+									(source.indicatorLevelID == checkIndicator.indicatorLevelID) ) {
+								max = checkIndicator.indicatorItem;
+							}
+						}
+					}
+					source.indicatorItem = max + 1;
+								
+					int key = IndicatorNode.insert(kdb, 
+							IndicatorNode.INDICATOR_NAME | IndicatorNode.INDICATOR_LEVEL | IndicatorNode.INDICATOR_ITEM |
+							IndicatorNode.INDICATOR_COMPETENCE | IndicatorNode.INDICATOR_CREATE |
+							IndicatorNode.INDICATOR_REMOVE, 
+							source);
+					cn.indicators.add(key);
+					break;
+					
+				}
+								
+			}			
+
+		}
 	}
 	
 	
-	private void checkAndLoadIndicators(CompetenceNode cn) {
+	private void checkAndLoadIndicators(CompetenceNode cn) {		
 		if(cn == null)
 			return;
 
 		if(cn.indicators != null)
 			return;
-		
+
+		loadIndicators(cn, true);
+	}
+	
+	private void loadIndicators(Integer competenceID, boolean flagPreload) {
+		try {
+			loadIndicators(cacheCompetence.get(competenceID), flagPreload);			
+		} catch(Exception e) {
+			e.printStackTrace();			
+		}
+	}
+
+	private void loadIndicators(CompetenceNode cn, boolean flagPreload) {		
+		if(cn == null)
+			return;
+
 		cn.indicators = loadChildIDs(sqlLoadIndicatorIDs, pattern, cn.competenceIncarnatio);
 		try {
-		if(cn.indicators.size() != 0) {
-			cacheIndicator.getAll(cn.indicators);
-			
-			CountIndicatorByLevel cibl = stat.get(cn.competenceID);
-			if(cibl != null) {
-				Arrays.fill(cibl.level, 0);
-			} else {
-				cibl = new CountIndicatorByLevel();
-				stat.put(cn.competenceID, cibl);								
+			if(flagPreload && (cn.indicators.size() != 0) ) {
+				cacheIndicator.getAll(cn.indicators);
 			}
-			for(Integer it : cn.indicators) 
-				cibl.level[ cacheIndicator.get(it).indicatorLevelID - 1 ] += 1;			
-		}
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
 	}
 
+	private int getCountIndicatorByLevelID(Integer competenceID, int levelID) {
+		int val = 0;
+		try {
+			val = getCountIndicatorByLevelID(cacheCompetence.get(competenceID), levelID);
+		} catch(Exception e) {
+			e.printStackTrace();
+			val = 0;
+		}
+		return val;
+	}
+	
+	private int getCountIndicatorByLevelID(CompetenceNode cn, int levelID) {
+		if(cn == null)
+			return 0;
+		if(cn.indicators == null)
+			checkAndLoadIndicators(cn);
+
+		int sum = 0;
+		try {
+			for (Integer it : cn.indicators) {
+				if (cacheIndicator.get(it).indicatorLevelID == levelID)
+					sum++;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			sum = 0;
+		}
+		return sum;
+	}
+
+	
 	private String sqlLoadOneCompetenceID;
 	private String sqlLoadIndicatorIDs;
 	private String pattern;
@@ -282,11 +350,5 @@ public class CompetenceModel extends BasicModel {
 	private LoadingCache<Integer, CompetenceNode> cacheCompetence;			
 	private LoadingCache<Integer, LevelNode> cacheLevel;
 	private LoadingCache<Integer, IndicatorNode> cacheIndicator;
-
-	private class CountIndicatorByLevel {
-		public int level[] = {0, 0, 0, 0, 0};
-	}
-	private Map<Integer, CountIndicatorByLevel> stat; 
-
 }
 

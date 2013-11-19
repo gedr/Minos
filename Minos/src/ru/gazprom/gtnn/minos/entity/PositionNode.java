@@ -30,7 +30,7 @@ public class PositionNode {
 
 	@Override
 	public String toString() {
-		return positionName;
+		return positionName + " < " + positionID + " > ";
 	}
 
 }

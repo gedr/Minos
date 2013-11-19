@@ -2,7 +2,6 @@ package ru.gazprom.gtnn.minos.models;
 
 import java.util.concurrent.ExecutionException;
 
-import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 import com.google.common.base.Preconditions;

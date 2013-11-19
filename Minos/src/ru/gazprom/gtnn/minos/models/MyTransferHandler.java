@@ -23,7 +23,8 @@ public class MyTransferHandler extends TransferHandler {
 			img = ImageIO.read(new File("C:\\Users\\Ed\\Google Диск\\Новая папка\\Minos\\image\\page_add_32.png"));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
+			img = null;
 		}
 	}
 	
@@ -61,7 +62,7 @@ public class MyTransferHandler extends TransferHandler {
 	public Image getDragImage() {
 		// TODO Auto-generated method stub
 		System.out.println(str + "  : MyTransferHandler.getDragImage");
-		return img;
+		return img == null ? super.getDragImage() : img;
 		//return super.getDragImage();
 	}
 

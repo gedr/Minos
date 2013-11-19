@@ -10,6 +10,7 @@ import javax.swing.tree.TreePath;
 import ru.gazprom.gtnn.minos.entity.DivisionNode;
 import ru.gazprom.gtnn.minos.entity.PositionNode;
 import ru.gazprom.gtnn.minos.util.DatabaseConnectionKeeper;
+import ru.gedr.util.tuple.Pair;
 
 import com.google.common.cache.LoadingCache;
 
@@ -40,17 +41,18 @@ public class PositionInDivisionModel extends BasicModel {
 		if(arg == null)
 			return true;
 		
-		assert((arg instanceof DivisionNode) || (arg instanceof PositionNode)) :
+		assert((arg instanceof DivisionNode) || (arg instanceof Pair<?, ?>)) :
 			"PositionInDivisionModel.isLeaf() : arg have incorrect type";
 
-		if(arg instanceof PositionNode) 
+		if(arg instanceof Pair<?, ?>) 
 			return true;
 
-		DivisionNode node = (DivisionNode)arg;
-		List<Integer> lst = checkAndLoadPosition(node);
-	
+		if(arg instanceof DivisionNode) {
+			List<Integer> lst = checkAndLoadPosition( (DivisionNode)arg );
+			return (division.isLeaf(arg) && (lst.size() == 0));
+		}
 
-		return (division.isLeaf(arg) && (lst.size() == 0));
+		return true;
 	}
 	
 	@Override
@@ -58,16 +60,18 @@ public class PositionInDivisionModel extends BasicModel {
 		if(parent == null)
 			return 0;
 		
-		assert((parent instanceof DivisionNode) || (parent instanceof PositionNode)) : 
+		assert((parent instanceof DivisionNode) || (parent instanceof Pair<?, ?>)) : 
 					"PositionInDivisionModel.getChildCount() : parent have incorrect type";
 
-		if(parent instanceof PositionNode) 
+		if(parent instanceof Pair<?, ?>) 
 			return 0;
 
-		DivisionNode node = (DivisionNode)parent;
-		List<Integer> lst = checkAndLoadPosition(node);
+		if(parent instanceof DivisionNode) {
+			List<Integer> lst = checkAndLoadPosition( (DivisionNode)parent );
+			return division.getChildCount(parent) + lst.size() ;
+		}
 		
-		return division.getChildCount(parent) + lst.size();
+		return  0;
 	}
 	
 	@Override
@@ -78,23 +82,27 @@ public class PositionInDivisionModel extends BasicModel {
 		assert(parent instanceof DivisionNode) :
 			"PositionInDivisionModel.getChild() : parent have incorrect type";
 		
-		DivisionNode node = (DivisionNode)parent;
-		List<Integer> lst = checkAndLoadPosition(node);
+		if(parent instanceof DivisionNode) {
+			DivisionNode node = (DivisionNode)parent;
+			List<Integer> lst = checkAndLoadPosition(node);
 
-		Object obj =  null;
-		try {
-			if(flagPositionBeforeSubDivision) {
-				obj = ( ((0 <= index) && (index < lst.size())) ? cachePosition.get(lst.get(index))
-						: division.getChild(parent, index - lst.size()) );
-			} else { 
-				obj = (((0 <= index) && (index < division.getChildCount(parent))) ? division.getChild(parent, index)						
-						: cachePosition.get(lst.get(index - division.getChildCount(parent))) );
+			Object obj =  null;
+			try {
+				if(flagPositionBeforeSubDivision) {
+					obj = ( ((0 <= index) && (index < lst.size())) ? new Pair<Integer, PositionNode>(node.divisionID, cachePosition.get(lst.get(index)))
+							: division.getChild(parent, index - lst.size()) );
+				} else { 
+					obj = (((0 <= index) && (index < division.getChildCount(parent))) ? division.getChild(parent, index)						
+							: new Pair<Integer, PositionNode>( node.divisionID, cachePosition.get(lst.get(index - division.getChildCount(parent))) ) );
+				}
+			} catch(Exception e) {
+				e.printStackTrace();
+				obj = null;
 			}
-		} catch(Exception e) {
-			e.printStackTrace();
-			obj = null;
+			return obj;			
 		}
-		return obj;
+		
+		return null;
 	}
 
 	@Override
@@ -103,32 +111,41 @@ public class PositionInDivisionModel extends BasicModel {
 	        return -1;
 
 		assert((parent instanceof DivisionNode) && 
-				((child instanceof PositionNode) || (child instanceof DivisionNode)) ) : 
+				((child instanceof Pair<?, ?>) || (child instanceof DivisionNode)) ) : 
 					"PositionInDivisionModel.getIndexOfChild() : parent have incorrect type";
 
-		if(parent instanceof PositionNode)
+		if(parent instanceof Pair<?, ?>)
 			return -1;
 		
-		DivisionNode node = (DivisionNode)parent;
-		List<Integer> lst = checkAndLoadPosition(node);
-		
-		int ind = -1;
-		if(child instanceof DivisionNode) {
-			ind = division.getIndexOfChild(parent, child);
-			return (flagPositionBeforeSubDivision ? lst.size() + ind : ind);
-		} 
-		
-		PositionNode nodeChild = (PositionNode) child;		
-		for(int i = 0; i < lst.size(); i++) {
-			if(lst.get(i) == nodeChild.positionID) {
-				ind = i;
-				break;
-			}
+		if(parent instanceof DivisionNode) {
+			DivisionNode node = (DivisionNode)parent;
+			List<Integer> lst = checkAndLoadPosition(node);
+			
+			
+			if(child instanceof DivisionNode) {
+				int ind = division.getIndexOfChild(parent, child);
+				return (flagPositionBeforeSubDivision ? lst.size() + ind : ind);
+			} 
+			
+			if(child instanceof Pair<?, ?>) {
+				@SuppressWarnings("unchecked")
+				Pair<Integer, PositionNode> p = (Pair<Integer, PositionNode>)child;
+
+				int ind = -1;
+				for(int i = 0; i < lst.size(); i++) {
+					if(lst.get(i) == p.getSecond().positionID) {
+						ind = i;
+						break;
+					}
+				}
+				if(ind == -1)
+					return ind;		
+				
+				return (flagPositionBeforeSubDivision ? ind : ind + division.getChildCount(parent));
+			}			
 		}
-		if(ind == -1)
-			return ind;		
-		
-		return (flagPositionBeforeSubDivision ? ind : ind + division.getChildCount(parent));
+
+		return -1;		
 	}
 
 	@Override

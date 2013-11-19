@@ -1,9 +1,9 @@
 package ru.gazprom.gtnn.minos.models;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
-import javax.swing.tree.TreeModel;
+import javax.swing.JOptionPane;
 import javax.swing.tree.TreePath;
 
 import com.google.common.cache.LoadingCache;
@@ -128,20 +128,35 @@ public class CatalogModel  extends BasicModel {
 	@Override
 	public void add(Object obj, TreePath path) throws Exception {
 		if(obj instanceof CatalogNode) {
-			CatalogNode cni = (CatalogNode)obj;		
+			if(path == null)
+				JOptionPane.showMessageDialog(null, "не выбрана позиция для вставки");
+
 			Object []nodes = path.getPath();
+			if( (nodes == null) || (nodes.length == 0) )
+				JOptionPane.showMessageDialog(null, "не выбрана позиция для вставки");
+
 			for(int i = nodes.length; i > 0; i--) {				
 				if(nodes[i - 1] instanceof CatalogNode) {
-					CatalogNode cnt = (CatalogNode) nodes[i - 1];
-					
-					cni.catalogParent = cnt.catalogID;
-					kdb.insertRow(true, "CATALOG", 
-							Arrays.asList(new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "name", cni.catalogName),
-									new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "parent", cni.catalogParent),
-									new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "item", cni.catalogItem),
-									new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "date_create", cni.catalogCreate),
-									new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "date_remove", cni.catalogRemove)
-									));
+					CatalogNode dest = (CatalogNode)nodes[i - 1];					
+					loadSubCatalogs(dest, false);					
+					int max = 1;
+					if(dest.subCatalogs.size() == 0) {
+						dest.subCatalogs = new ArrayList<>();
+					} else {						
+						for(int j = 0; j < dest.subCatalogs.size(); j++) {
+							int item = cacheCatalog.get(dest.subCatalogs.get(j)).catalogItem;
+							if( max <  item)
+								max = item;
+						}							
+					}
+		
+					CatalogNode source = (CatalogNode)obj;
+					source.catalogParent = dest.catalogID;
+					source.catalogItem = max + 1;
+					CatalogNode.insert(kdb, 
+							CatalogNode.CATALOG_ITEM | CatalogNode.CATALOG_NAME | CatalogNode.CATALOG_PARENT | 
+							CatalogNode.CATALOG_CREATE | CatalogNode.CATALOG_REMOVE, 
+							source);
 					break;
 				}
 			}			
@@ -156,15 +171,23 @@ public class CatalogModel  extends BasicModel {
 	}
 	
 	private void checkAndLoadSubCatalogs(CatalogNode cn) {
+		if (cn == null)
+			return;
 		if(cn.subCatalogs == null)  {
-			cn.subCatalogs = loadChildIDs(sqlLoadSubCatalogIDs, pattern, cn.catalogID);
-			if(cn.subCatalogs.size() != 0)
-				try {
-					cacheCatalog.getAll(cn.subCatalogs);
-				} catch (ExecutionException e) {					
-					e.printStackTrace();
-				}
+			loadSubCatalogs(cn, true);
 		}
+	}
+	
+	private void loadSubCatalogs(CatalogNode cn, boolean flagPreload) {
+		if (cn == null)
+			return;
+		cn.subCatalogs = loadChildIDs(sqlLoadSubCatalogIDs, pattern, cn.catalogID);
+		if( flagPreload && (cn.subCatalogs.size() != 0) )
+			try {
+				cacheCatalog.getAll(cn.subCatalogs);
+			} catch (ExecutionException e) {					
+				e.printStackTrace(); 
+			}
 	}
 
 	private CatalogNode root = null;

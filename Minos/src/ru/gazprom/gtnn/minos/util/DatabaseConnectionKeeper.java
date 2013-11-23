@@ -1,5 +1,8 @@
 package ru.gazprom.gtnn.minos.util;
 
+import java.io.InputStream;
+import java.io.Reader;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -7,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.List;
 
 
@@ -175,7 +179,77 @@ public class DatabaseConnectionKeeper {
 				: con.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS) );
 		
 		for(int i = 0; i < vals.size(); i++) {
-			stmt.setObject(i + 1, vals.get(i).val);	
+			System.out.println(vals.get(i).val);
+			// stmt.setObject(i + 1, vals.get(i).val);
+			
+			switch(vals.get(i).dataType) {					
+			case java.sql.Types.CLOB:
+				stmt.setClob(i + 1, (Reader)vals.get(i).val);														
+				break;
+			case java.sql.Types.BLOB:
+				stmt.setBlob(i + 1, (InputStream)vals.get(i).val);														
+				break;
+
+			case java.sql.Types.TIMESTAMP:
+				stmt.setTimestamp(i + 1, (Timestamp)vals.get(i).val);								
+				break;					
+
+			case java.sql.Types.DATE:
+				java.sql.Date dt  = null;
+				if(vals.get(i).val instanceof java.util.Date)
+					dt = new java.sql.Date( ((java.util.Date)vals.get(i).val).getTime() );
+				else 
+					if(vals.get(i).val instanceof java.sql.Date)
+						dt = (java.sql.Date)vals.get(i).val;
+
+				stmt.setDate(i + 1, dt);									
+				break;					
+
+			case java.sql.Types.DECIMAL:
+			case java.sql.Types.NUMERIC:
+				stmt.setBigDecimal(i + 1, (BigDecimal)vals.get(i).val);								
+				break;					
+
+			case java.sql.Types.FLOAT:
+			case java.sql.Types.DOUBLE:
+				stmt.setDouble(i + 1, (Double)vals.get(i).val);								
+				break;					
+
+			case java.sql.Types.REAL:
+				stmt.setFloat(i + 1, (Float)vals.get(i).val);										
+				break;
+
+			case java.sql.Types.BIGINT:					
+				stmt.setLong(i + 1, (Long)vals.get(i).val);				
+				break;
+
+			case java.sql.Types.INTEGER:
+				stmt.setInt(i + 1, (Integer)vals.get(i).val);
+				break;
+
+			case java.sql.Types.TINYINT:
+			case java.sql.Types.SMALLINT:
+				stmt.setShort(i + 1, (Short)vals.get(i).val);				
+				break;
+
+			case java.sql.Types.BIT:
+			case java.sql.Types.BOOLEAN:
+				stmt.setBoolean(i + 1, (Boolean)vals.get(i).val);				
+				break;
+
+			case java.sql.Types.CHAR:
+			case java.sql.Types.VARCHAR:
+			case java.sql.Types.LONGVARCHAR:
+			case java.sql.Types.NCHAR:
+			case java.sql.Types.NVARCHAR:
+			case java.sql.Types.LONGNVARCHAR:
+				stmt.setString(i + 1, (String)vals.get(i).val);				
+				break;
+
+			default:
+				throw new IllegalArgumentException("DatabaseConnectionKeeper.insertRow() unknown sql type : " + vals.get(i).dataType);
+			}				
+
 		}
 		stmt.executeUpdate();
 		

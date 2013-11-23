@@ -5,10 +5,20 @@ import java.awt.BorderLayout;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.DirectoryIteratorException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,20 +42,23 @@ import javax.swing.JTree;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreePath;
 
+import com.google.common.base.Preconditions;
 import com.google.common.cache.*;
 
 import ru.gazprom.gtnn.minos.entity.*;
 import ru.gazprom.gtnn.minos.models.BasicModel;
 import ru.gazprom.gtnn.minos.models.CatalogModel;
 import ru.gazprom.gtnn.minos.models.CompetenceAndCatalog;
-import ru.gazprom.gtnn.minos.models.CompetenceAndPositionInDivisionModel;
 import ru.gazprom.gtnn.minos.models.CompetenceModel;
 import ru.gazprom.gtnn.minos.models.DivisionModel;
 import ru.gazprom.gtnn.minos.models.MinosTreeRenderer;
 import ru.gazprom.gtnn.minos.models.MyTransferHandler;
 import ru.gazprom.gtnn.minos.models.PersonInDivisionModel;
 import ru.gazprom.gtnn.minos.models.PositionInDivisionModel;
+import ru.gazprom.gtnn.minos.models.ProfileAndPositionInDivision;
+import ru.gazprom.gtnn.minos.models.ProfileModel;
 import ru.gazprom.gtnn.minos.util.*;
 
 
@@ -109,6 +122,22 @@ public class Start {
 				map.put("indicatorRemove", "date_remove");
 				map.put("indicatorHost", "host");
 				
+
+				map.put("ProfileTable", "PROFILE");
+				map.put("profileID", "id");
+				map.put("profileName", "name");
+				map.put("profileItem", "item");
+				map.put("profileDivisionID", "division_id");
+				map.put("profilePositionID", "position_id");
+				map.put("profilePositionBID", "positionB_id");
+				map.put("profileCompetenceID", "competence_id");
+				map.put("profileMinLevel", "min_level");
+				map.put("profileVariant", "variant");
+				map.put("profileCreate", "date_create");
+				map.put("profileRemove", "date_remove");
+				map.put("profileHost", "host");
+
+								
 				CatalogNode.names = map;
 				CompetenceNode.names = map;
 				IndicatorNode.names = map;
@@ -172,6 +201,18 @@ public class Start {
 								"select id, name, level_id, competence_incarnatio, item, date_create, date_remove, host  from INDICATOR where (id in (%id%)) and (GetDate() between date_create and date_remove) order by item",
 								"%id%", map));
 				
+				LoadingCache<Integer, ProfileNode> cacheProfile = CacheBuilder.
+						newBuilder().
+						build(new MinosCacheLoader<Integer, ProfileNode>(ProfileNode.class, kdbM, 
+								"select p.id, p.name, p.division_id, p.positionB_id, p.position_id, " +
+										"p.item, p.min_level, p.variant, p.date_create, p.date_remove, p.host, " +
+										"c.id as competence_id from PROFILE p " +
+										"join COMPETENCE c on c.incarnatio = p.competence_incanatio " +
+										"where GETDATE() between p.date_create and p.date_remove " +
+										"and GETDATE() between c.date_create and c.date_remove " +
+										"and p.id in (%id%)",
+								"%id%", map));
+				
 				
 				BasicModel tmd = new DivisionModel(kdb, cacheDivision, 
 						"select tOrgStruID from tOrgStru where Parent = 0", 
@@ -193,15 +234,18 @@ public class Start {
 				BasicModel tmcc = new CompetenceAndCatalog(kdbM, cacheCompetence, tmcat, tmcom,
 						"select id from COMPETENCE where catalog_id = %id%", "%id%", true);
 
+				BasicModel tmpm = new ProfileModel(kdbM, tmcom, cacheCompetence);			
+						
+				
 				String[] arr = {"%id1%", "%id2%"};
-				BasicModel tcpd = new CompetenceAndPositionInDivisionModel(kdbM, cacheCompetence, tmper, tmcom,
-						"select distinct(c.id) from PROFILE p " +
-								" join PROFILE_COMPETENCE pc on pc.profile_id = p.id and GETDATE() between pc.date_create and pc.date_remove " +
-								" join COMPETENCE c on c.incarnatio = pc.competence_incarnatio " +
-								" where GETDATE() between  c.date_create and c.date_remove " +
-								" and p.division_id = %id1% " + 
-								" and p.position_id = %id2% ",
-								arr);
+				BasicModel tcpd = new ProfileAndPositionInDivision(kdbM, cacheProfile, tmpos, tmpm,
+						"select p.id from PROFILE p " +
+						"join COMPETENCE c on c.incarnatio = p.competence_incanatio " +
+						"where GETDATE() between p.date_create and p.date_remove " +
+						"and GETDATE() between c.date_create and c.date_remove " +
+						"and division_id = %id1% and position_id = %id2% " + 
+						"and variant = 1 ",
+						arr);
 
 
 				TreeCellRenderer tcr = new MinosTreeRenderer();
@@ -244,8 +288,7 @@ public class Start {
 				JToolBar tb = new JToolBar();
 				JButton btnRefreshCatalog = new JButton("refresh catalog");
 				btnRefreshCatalog.addActionListener(new MyListener(tcc));
-				
-				
+								
 				JButton btnAddCatalog = new JButton("add catalog");
 				btnAddCatalog.addActionListener(new MyListener2(tcc));
 
@@ -255,11 +298,16 @@ public class Start {
 				JButton btnAddIndicator = new JButton("add indicator");
 				btnAddIndicator.addActionListener(new MyListener4(tcc));
 
+				JButton btnLoadCompetenceDir = new JButton("load competence dir");
+				btnLoadCompetenceDir.addActionListener(new MyListener5(tcc, (CatalogModel)tmcat));
+
+				
 				
 				tb.add(btnAddCatalog);
 				tb.add(btnAddCompetence);
 				tb.add(btnRefreshCatalog);
 				tb.add(btnAddIndicator);
+				tb.add(btnLoadCompetenceDir);
 				
 				JPanel pan = new JPanel(new BorderLayout());
 				pan.add(new JScrollPane(tcc), BorderLayout.CENTER);
@@ -287,15 +335,11 @@ public class Start {
 				roundRating.add(tb2, BorderLayout.NORTH);
 				roundRating.add(new JLabel("Раунд оценки: ???, название: ???,  приказ: ???, дата начала: ???, дата конца: ???"), BorderLayout.SOUTH);
 				
-				
-				
 				JTable table = new JTable(3, 2);				
 				roundRating.add(new JScrollPane(table));
-				
-							
+											
 				JSplitPane split4 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, splitPane3, roundRating);
 				split4.setDividerLocation(300);
-
 				
 				
 				JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
@@ -424,6 +468,230 @@ public class Start {
 			//t.updateUI();
 			
 		}		
+	}
+
+	static class MyListener5 implements ActionListener, Runnable{		
+		private String 		startDir;
+		private String 		fileName;
+		private CatalogNode parentCatalog;
+		private JTree catalogTree;
+		private CatalogModel catalogModel;
+		
+
+		public MyListener5(JTree catalogTree, CatalogModel catalogModel) {		
+			this.catalogTree = catalogTree;		
+			this.catalogModel = catalogModel;
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			
+			if( catalogTree.isSelectionEmpty() ) {
+				JOptionPane.showMessageDialog(catalogTree, "не выбрана позиция для вставки");
+				return;
+			}
+			TreePath p = catalogTree.getSelectionPath();
+			if( !( p.getLastPathComponent() instanceof CatalogNode) ) {
+				JOptionPane.showMessageDialog(catalogTree, "не выбрана позиция для вставки");
+				return;				
+			}
+			
+			parentCatalog = (CatalogNode) p.getLastPathComponent();
+			
+			JTextField pathField = new JTextField(100);
+			JTextField fileField = new JTextField(100);
+			pathField.setText("c:\\tmp\\minos\\");
+			fileField.setText("1.txt");
+
+			JComponent[] inputs = new JComponent[] {
+					new JLabel("Start catalog"),
+					pathField,
+					new JLabel("Common file"),
+					fileField,
+			};
+			
+			if( (JOptionPane.OK_OPTION == JOptionPane.showOptionDialog(null, inputs, "Competence dialog", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null)) &&
+					(!pathField.getText().isEmpty()) && (!fileField.getText().isEmpty()) ) {
+
+				startDir = pathField.getText();
+				fileName = fileField.getText();
+				Thread thread = new Thread(this);
+				thread.start();
+			}
+				
+		}
+
+		@Override
+		public void run() {			
+			Node node = readDir(Paths.get(startDir));
+			if(node == null)
+				return;
+			printNode(node, 1);
+			try {
+				catalogLoader(parentCatalog, node, 0);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}			
+		}	
+		
+		private Node readDir(Path startPath) {
+			Node node = new Node();
+			try (DirectoryStream<Path> stream = Files.newDirectoryStream(startPath)) {					
+				node.name = startPath.getFileName().toString();
+				
+			    for (Path file: stream) {		    	
+			        if(Files.isDirectory(file, LinkOption.NOFOLLOW_LINKS)) {		        	
+			        	if(node.child == null)
+			        		node.child = new ArrayList<>();
+			        	node.child.add(readDir(file));
+			        }
+
+			        if(file.getFileName().toString().equalsIgnoreCase(fileName))
+			        	node.path = file;
+			    }
+			} catch (IOException | DirectoryIteratorException e) {
+				e.printStackTrace();
+			}
+			
+			return node;
+		}
+		
+		private void catalogLoader(CatalogNode dest, Node node, int level) throws Exception {
+			CatalogNode nodeCatalog;
+			if(level == 0) {
+				nodeCatalog = dest;
+			} else {
+				nodeCatalog = new CatalogNode();			
+				nodeCatalog.catalogName = node.name;
+				nodeCatalog.subCatalogs = Collections.emptyList();
+				nodeCatalog.catalogCreate = new java.sql.Date(System.currentTimeMillis());
+				nodeCatalog.catalogRemove = BasicModel.endTime;
+				catalogModel.add(nodeCatalog, dest, false, 
+						CatalogNode.CATALOG_NAME | CatalogNode.CATALOG_PARENT | CatalogNode.CATALOG_ITEM |
+						CatalogNode.CATALOG_CREATE | CatalogNode.CATALOG_REMOVE | CatalogNode.CATALOG_VARIANT);
+			}
+
+			Preconditions.checkArgument(nodeCatalog.catalogID != -1, "catalogLoader() : cannot load  CatalogNode" + nodeCatalog);
+			
+			//fileLoader(node.path, node.catalogID);
+			
+			if(node.child != null) {				
+				for(Node n : node.child) 
+					catalogLoader(nodeCatalog, n, level + 1);
+			}
+		}
+
+		
+		private void fileLoader(Path file, int catalogID) {
+			if(file == null)
+				return;
+			
+			Charset charset = Charset.forName("UTF-8");
+			try ( BufferedReader reader = Files.newBufferedReader(file, charset) ) {
+			    String line = null;
+			    int step = 1;	
+			    int itemIndicator = 1;
+			    int itemCompetence = 1;
+			    
+			    java.util.Date currentDate = new java.util.Date(System.currentTimeMillis()); 
+
+			    // start initialization
+			    CompetenceNode nodeCompetence = new CompetenceNode();
+			    nodeCompetence.competenceIncarnatio = 0; //
+			    nodeCompetence.competenceCatalogID = catalogID;
+			    nodeCompetence.competenceChainNumber = 0;
+			    nodeCompetence.competenceCreate = currentDate;
+			    nodeCompetence.competenceRemove = BasicModel.endTime;
+			    
+			    IndicatorNode nodeIndicator = new IndicatorNode();
+			    nodeIndicator.indicatorCreate = currentDate;
+			    nodeIndicator.indicatorRemove = BasicModel.endTime;   
+			    
+			    while ((line = reader.readLine()) != null) {
+			    	if ( line.contains("$") ) {
+			    			step = 1;
+			    			itemIndicator = 1;
+			    			itemCompetence++;
+			    			continue;
+			    	}
+			    	if(line.isEmpty()) { 
+			    		step++;
+			    		itemIndicator = 1;
+			    		continue;
+			    	}
+			    	switch(step) {
+			    	case 1:
+			    		nodeCompetence.competenceName = line;
+			    		nodeCompetence.competenceItem = itemCompetence;
+ 			    		//System.out.println("<competence name> "  + line);
+			    		break;
+			    	case 2:
+			    		nodeCompetence.competenceDescr = line;
+			    		/*
+			    		nodeCompetence.competenceID = CompetenceNode.insert(kdb,			    				
+			    				CompetenceNode.COMPETENCE_NAME | CompetenceNode.COMPETENCE_DESCR | CompetenceNode.COMPETENCE_ITEM |
+			    				CompetenceNode.COMPETENCE_CATALOG | CompetenceNode.COMPETENCE_INCARNATIO | CompetenceNode.COMPETENCE_CHAIN_NUMBER |
+			    				CompetenceNode.COMPETENCE_CREATE | CompetenceNode.COMPETENCE_REMOVE,
+			    				true, nodeCompetence);
+			    		nodeCompetence.competenceIncarnatio = nodeCompetence.competenceID;
+*/
+			    		System.out.println(nodeCompetence);
+			    		//System.out.println("<competence desc> "  + line);
+			    		break;
+			    	case 3:
+			    	case 4:
+			    	case 5:
+			    	case 6:
+			    	case 7:
+			    		nodeIndicator.indicatorName = line;
+			    		nodeIndicator.indicatorItem = itemIndicator++;
+			    		nodeIndicator.indicatorLevelID = step - 2;
+			    		nodeIndicator.indicatorCompetenceIncarnatio = nodeCompetence.competenceIncarnatio;
+			    		
+			    		/*
+			    		nodeIndicator.indicatorID = IndicatorNode.insert(kdb, 
+					    		IndicatorNode.INDICATOR_NAME | IndicatorNode.INDICATOR_ITEM | 
+					    		IndicatorNode.INDICATOR_LEVEL | IndicatorNode.INDICATOR_COMPETENCE |
+					    		IndicatorNode.INDICATOR_CREATE | IndicatorNode.INDICATOR_REMOVE, 
+					    		nodeIndicator);
+					    */
+			    		System.out.println(nodeIndicator);
+			    		//System.out.println("<indicaot level =" + (step - 2) + "   item =" + itemIndicator + " > "  + line);
+			    		break;
+			    	}			    	
+			    }
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+
+		private void printNode(Node node, int level) {
+			String s = "";
+			for(int i = 0; i < level * 3; i++)
+				s += " ";
+			System.out.println(s + "<dir> " + node.name);
+			if(node.path != null ) {
+				System.out.println(s + " <file> " + node.path);
+			}
+			
+			if(node.child == null) 
+				return;
+			
+			for(Node n : node.child) {
+				printNode(n, level + 1);
+			}	
+		}
+
+		
+		private static class Node {
+			public List<Node> child;		
+			Path path;
+			String name;
+			int catalogID;
+		}
+		
+		static final int STEP_COUNT = 7;
 	}
 
 	

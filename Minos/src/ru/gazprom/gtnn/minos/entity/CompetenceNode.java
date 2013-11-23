@@ -34,10 +34,8 @@ public class CompetenceNode {
 	public java.util.Date competenceCreate;
 	@TableColumn
 	public java.util.Date competenceRemove;
-	
-	
+		
 	public List<Integer> indicators;		
-
 	
 	public static final int COMPETENCE_NAME = 1;
 	public static final int COMPETENCE_DESCR = 2;

@@ -1,11 +1,13 @@
 package ru.gazprom.gtnn.minos.models;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
 import javax.swing.JOptionPane;
 import javax.swing.tree.TreePath;
 
+import com.google.common.base.Preconditions;
 import com.google.common.cache.LoadingCache;
 
 import ru.gazprom.gtnn.minos.entity.CatalogNode;
@@ -128,15 +130,25 @@ public class CatalogModel  extends BasicModel {
 	@Override
 	public void add(Object obj, TreePath path) throws Exception {
 		if(obj instanceof CatalogNode) {
-			if(path == null)
+			if(path == null) {
 				JOptionPane.showMessageDialog(null, "не выбрана позиция для вставки");
+				return ;
+			}
 
 			Object []nodes = path.getPath();
-			if( (nodes == null) || (nodes.length == 0) )
+			if( (nodes == null) || (nodes.length == 0) ) {
 				JOptionPane.showMessageDialog(null, "не выбрана позиция для вставки");
+				return;
+			}
 
 			for(int i = nodes.length; i > 0; i--) {				
 				if(nodes[i - 1] instanceof CatalogNode) {
+					add((CatalogNode)obj, 
+							(CatalogNode)nodes[i - 1],
+							true,
+							CatalogNode.CATALOG_ITEM | CatalogNode.CATALOG_NAME | CatalogNode.CATALOG_PARENT | 
+							CatalogNode.CATALOG_CREATE | CatalogNode.CATALOG_REMOVE | CatalogNode.CATALOG_VARIANT);
+/*					
 					CatalogNode dest = (CatalogNode)nodes[i - 1];					
 					loadSubCatalogs(dest, false);					
 					int max = 1;
@@ -153,14 +165,42 @@ public class CatalogModel  extends BasicModel {
 					CatalogNode source = (CatalogNode)obj;
 					source.catalogParent = dest.catalogID;
 					source.catalogItem = max + 1;
-					CatalogNode.insert(kdb, 
+					source.insert(kdb,  
 							CatalogNode.CATALOG_ITEM | CatalogNode.CATALOG_NAME | CatalogNode.CATALOG_PARENT | 
-							CatalogNode.CATALOG_CREATE | CatalogNode.CATALOG_REMOVE, 
-							source);
+							CatalogNode.CATALOG_CREATE | CatalogNode.CATALOG_REMOVE);
+*/
 					break;
 				}
 			}			
 		}
+	}
+
+	
+	public void add(CatalogNode source, CatalogNode dest, boolean flagLoadSubCatalogs, int flags) throws Exception {
+		Preconditions.checkNotNull(source, "CatalogModel.add() : soure is null");	
+		Preconditions.checkNotNull(dest, "CatalogModel.add() : dest is null");
+
+		if (flagLoadSubCatalogs) // need load sub catalogs ids
+			loadSubCatalogs(dest, false);
+
+		boolean fEmpty = true;
+		if (dest.subCatalogs != null)
+			if( !dest.subCatalogs.equals(Collections.emptyList()) )
+				fEmpty = true;
+
+		source.catalogItem = (fEmpty ? 1 : dest.subCatalogs.size() + 1); // set item value
+		source.catalogVariant = dest.catalogVariant;
+		source.catalogParent = dest.catalogID;
+
+		source.insert(kdb, flags);
+
+		if(fEmpty) { 
+			dest.subCatalogs = new ArrayList<>();
+		}
+		
+		dest.subCatalogs.add(source.catalogID);	
+
+		cacheCatalog.put(source.catalogID, source); // put new catalog element in cache
 	}
 
 
@@ -195,18 +235,3 @@ public class CatalogModel  extends BasicModel {
 	private String sqlLoadSubCatalogIDs;
 	private String pattern;
 }
-
-
-
-
-	
-	
-
-	
-
-
-	
-
-	
-		
-	

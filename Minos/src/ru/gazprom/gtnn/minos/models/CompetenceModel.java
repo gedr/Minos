@@ -1,6 +1,7 @@
 package ru.gazprom.gtnn.minos.models;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import javax.swing.JOptionPane;
 import javax.swing.tree.TreePath;
@@ -195,87 +196,106 @@ public class CompetenceModel extends BasicModel {
 		super.reload();
 	}
 
+	public void add(CompetenceNode source, CatalogNode dest) throws Exception{
+		source.competenceCatalogID = dest.catalogID;
+		source.competenceVariant = dest.catalogVariant;
+		try {
+			source.insert(kdb,
+					CompetenceNode.COMPETENCE_NAME | CompetenceNode.COMPETENCE_DESCR | 
+					CompetenceNode.COMPETENCE_ITEM | CompetenceNode.COMPETENCE_CATALOG | 
+					CompetenceNode.COMPETENCE_INCARNATIO | CompetenceNode.COMPETENCE_CHAIN_NUMBER |
+					CompetenceNode.COMPETENCE_REMOVE | CompetenceNode.COMPETENCE_CREATE, 
+					true);
+			  
+		} catch (Exception e) {
+			e.printStackTrace();			
+			source.competenceID = -1;
+			throw e;
+		}
+	}
+
+	public void add(IndicatorNode source, CompetenceNode dest, boolean flagLoadIndicator) throws Exception {
+		source.indicatorCompetenceIncarnatio = dest.competenceIncarnatio;		
+
+		if (flagLoadIndicator) // need load sub catalogs ids
+			loadIndicators(dest, false);
+		
+		boolean fEmpty = false; // indicators may be empty
+		if( (dest.indicators == null) || (dest.indicators.equals(Collections.emptyList())) )
+			fEmpty = true;
+		
+		try {
+			int num = 0;
+			if (!fEmpty) {
+				for (Integer it : dest.indicators) { // search max item indicators by level
+					IndicatorNode inode = cacheIndicator.get(it);
+					if ((source.indicatorLevelID == inode.indicatorLevelID)
+							&& (num < inode.indicatorItem))
+						num = inode.indicatorItem;
+				}
+			}
+			source.indicatorItem = num + 1;
+			source.insert(kdb, 
+					IndicatorNode.INDICATOR_NAME | IndicatorNode.INDICATOR_ITEM |
+					IndicatorNode.INDICATOR_LEVEL | IndicatorNode.INDICATOR_COMPETENCE |
+					IndicatorNode.INDICATOR_CHILD |
+					IndicatorNode.INDICATOR_CREATE | IndicatorNode.INDICATOR_REMOVE);
+			if (fEmpty) {
+				dest.indicators = new ArrayList<>();
+			}
+			dest.indicators.add(source.indicatorID);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}
+	}
+
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public void add(Object obj, TreePath path) throws Exception {
+		if( path == null) {
+			JOptionPane.showMessageDialog(null, "не выбрана позиция для вставки");
+			return;
+		}
+
+		Object []nodes = path.getPath();
+		if( (nodes == null) || (nodes.length == 0) ) {
+			JOptionPane.showMessageDialog(null, "не выбрана позиция для вставки");
+			return;
+		}
+	
 		if(obj instanceof CompetenceNode) {				
-			if(path == null)
-				JOptionPane.showMessageDialog(null, "не выбрана позиция для вставки");
-
-			Object []nodes = path.getPath();
-			if( (nodes == null) || (nodes.length == 0) )
-				JOptionPane.showMessageDialog(null, "не выбрана позиция для вставки");
-
-			for(int i = nodes.length; i > 0; i--) {				
-				if(nodes[i - 1] instanceof CatalogNode) {
-					CompetenceNode cni = (CompetenceNode)obj;
-					CatalogNode cnt = (CatalogNode) nodes[i - 1];					
-					cni.competenceCatalogID = cnt.catalogID;
-					cni.competenceIncarnatio = 0;
-					CompetenceNode.insert(kdb, 
-							CompetenceNode.COMPETENCE_NAME | CompetenceNode.COMPETENCE_DESCR | CompetenceNode.COMPETENCE_ITEM | 
-							CompetenceNode.COMPETENCE_CATALOG | CompetenceNode.COMPETENCE_INCARNATIO | CompetenceNode.COMPETENCE_CHAIN_NUMBER | 
-							CompetenceNode.COMPETENCE_REMOVE | CompetenceNode.COMPETENCE_CREATE, 
-							true, cni);
-					break;
+			for(int i = nodes.length; i > 0; i--) { // search CatalogNode in tree 				
+				if(nodes[i - 1] instanceof CatalogNode) {					
+					add((CompetenceNode)obj, (CatalogNode) nodes[i - 1]);
+					return;
 				}				
 			}			
 		}
 		
 		if(obj instanceof IndicatorNode) {
-			if(path == null)
-				JOptionPane.showMessageDialog(null, "не выбрана позиция для вставки");
-
-			Object []nodes = path.getPath();
-			if( (nodes == null) || (nodes.length == 0) )
-				JOptionPane.showMessageDialog(null, "не выбрана позиция для вставки");
-
 			for(int i = nodes.length; i > 0; i--) {
 				if( (nodes[i - 1] instanceof CatalogNode) ||
-						(nodes[i - 1] instanceof CompetenceNode) ){
+						(nodes[i - 1] instanceof CompetenceNode) ){ // incorrect element
 					JOptionPane.showMessageDialog(null, "не выбрана позиция для вставки");
-					break;
+					return;
 				}
 				
-				if(nodes[i - 1] instanceof Pair) {
-					@SuppressWarnings("unchecked")
-					Pair<Integer, LevelNode> p = (Pair<Integer, LevelNode>)nodes[i - 1]; 
-										
-					CompetenceNode cn = cacheCompetence.get(p.getFirst());
-					IndicatorNode source = (IndicatorNode)obj;
-					source.indicatorLevelID = p.getSecond().levelID;					
-					source.indicatorCompetenceIncarnatio = cn.competenceIncarnatio;
-					loadIndicators(p.getFirst(), false);
-					int max = 1;
-					if(cn.indicators.size() == 0) {
-						cn.indicators = new ArrayList<>();
-					} else {
-						
-						for(Integer it : cn.indicators) {
-							IndicatorNode checkIndicator = cacheIndicator.get(it);
-							if(checkIndicator == null)
-								return;
-							
-							if( (max < checkIndicator.indicatorItem) && 
-									(source.indicatorLevelID == checkIndicator.indicatorLevelID) ) {
-								max = checkIndicator.indicatorItem;
-							}
-						}
-					}
-					source.indicatorItem = max + 1;
-								
-					int key = IndicatorNode.insert(kdb, 
-							IndicatorNode.INDICATOR_NAME | IndicatorNode.INDICATOR_LEVEL | IndicatorNode.INDICATOR_ITEM |
-							IndicatorNode.INDICATOR_COMPETENCE | IndicatorNode.INDICATOR_CREATE |
-							IndicatorNode.INDICATOR_REMOVE, 
-							source);
-					cn.indicators.add(key);
-					break;
-					
+				if(nodes[i - 1] instanceof IndicatorNode) { // if select someone indicator
+					Preconditions.checkNotNull(nodes[i - 3] instanceof CompetenceNode, "CompetenceModel.add() : incorrect hierarchy");
+					((IndicatorNode)obj).indicatorLevelID = ((IndicatorNode)nodes[i - 1]).indicatorLevelID;
+					add((IndicatorNode)obj, (CompetenceNode)nodes[i - 3], true);
+					return;					
 				}
-								
+				
+				if(nodes[i - 1] instanceof Pair<?, ?>) { // if select someone level
+					Preconditions.checkNotNull(nodes[i - 2] instanceof CompetenceNode, "CompetenceModel.add() : incorrect hierarchy");					
+					((IndicatorNode)obj).indicatorLevelID = ((Pair<? extends Integer, ? extends LevelNode>)nodes[i - 1]).getSecond().levelID;
+					add((IndicatorNode)obj, (CompetenceNode)nodes[i - 2], true);
+					return;					
+				}
 			}			
-
 		}
 	}
 	
@@ -288,14 +308,6 @@ public class CompetenceModel extends BasicModel {
 			return;
 
 		loadIndicators(cn, true);
-	}
-	
-	private void loadIndicators(Integer competenceID, boolean flagPreload) {
-		try {
-			loadIndicators(cacheCompetence.get(competenceID), flagPreload);			
-		} catch(Exception e) {
-			e.printStackTrace();			
-		}
 	}
 
 	private void loadIndicators(CompetenceNode cn, boolean flagPreload) {		

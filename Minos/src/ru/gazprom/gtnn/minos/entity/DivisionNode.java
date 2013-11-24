@@ -6,7 +6,7 @@ import ru.gazprom.gtnn.minos.annotations.TableColumn;
 import ru.gazprom.gtnn.minos.annotations.TableName;
 
 @TableName(name = "DivisionTable")
-public class DivisionNode {
+public class DivisionNode extends BasicNode<Integer> {
 	@TableColumn
 	public int divisionID;
 	@TableColumn
@@ -36,6 +36,11 @@ public class DivisionNode {
 
 	@Override
 	public int hashCode() {		
+		return divisionID;
+	}
+
+	@Override
+	public Integer getID() {		
 		return divisionID;
 	}
 }

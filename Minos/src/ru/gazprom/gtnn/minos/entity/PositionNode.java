@@ -4,7 +4,7 @@ import ru.gazprom.gtnn.minos.annotations.TableColumn;
 import ru.gazprom.gtnn.minos.annotations.TableName;
 
 @TableName(name = "PersonTable")
-public class PositionNode {
+public class PositionNode extends BasicNode<Integer> {
 	@TableColumn
 	public int positionID;
 	@TableColumn
@@ -33,4 +33,8 @@ public class PositionNode {
 		return positionName + " < " + positionID + " > ";
 	}
 
+	@Override
+	public Integer getID() {
+		return positionID;
+	}
 }

@@ -198,9 +198,7 @@ public class CatalogModel  extends BasicModel {
 			dest.subCatalogs = new ArrayList<>();
 		}
 		
-		dest.subCatalogs.add(source.catalogID);	
-
-		cacheCatalog.put(source.catalogID, source); // put new catalog element in cache
+		dest.subCatalogs.add(source.catalogID);
 	}
 
 

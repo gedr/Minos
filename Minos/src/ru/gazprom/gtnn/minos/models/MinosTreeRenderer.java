@@ -2,11 +2,14 @@ package ru.gazprom.gtnn.minos.models;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.util.concurrent.ExecutionException;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultTreeCellRenderer;
+
+import com.google.common.cache.LoadingCache;
 
 import ru.gazprom.gtnn.minos.entity.CatalogNode;
 import ru.gazprom.gtnn.minos.entity.CompetenceNode;
@@ -14,6 +17,7 @@ import ru.gazprom.gtnn.minos.entity.DivisionNode;
 import ru.gazprom.gtnn.minos.entity.IndicatorNode;
 import ru.gazprom.gtnn.minos.entity.LevelNode;
 import ru.gazprom.gtnn.minos.entity.PositionNode;
+import ru.gazprom.gtnn.minos.entity.ProfileNode;
 import ru.gedr.util.tuple.Pair;
 
 
@@ -30,14 +34,14 @@ public class MinosTreeRenderer extends DefaultTreeCellRenderer {
 
 	private static Color selectedColor = Color.GRAY;
 	private static Color unselectedColor = Color.WHITE;
-	
+
 	@Override
 	public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
 		cell.setOpaque(true);
 		cell.setBackground(selected ? selectedColor : unselectedColor);
 		if(value instanceof CatalogNode) {			
 			cell.setIcon(catalog);
-			cell.setText(((CatalogNode)value).catalogName + ((CatalogNode)value).catalogMode);			
+			cell.setText(((CatalogNode)value).catalogName);			
 			return cell;
 		}
 
@@ -62,35 +66,44 @@ public class MinosTreeRenderer extends DefaultTreeCellRenderer {
 
 		
 		if(value instanceof Pair<?, ?>) {
-			if(tree.getName().equals("CompetenceAndCatalog")) {
-				@SuppressWarnings("unchecked")
-				Pair<Integer, LevelNode> p = (Pair<Integer, LevelNode>)value; 
+			@SuppressWarnings("unchecked")
+			Pair<Integer, Object> p = (Pair<Integer, Object>) value;
+			if(p.getSecond() instanceof LevelNode) {
 				cell.setIcon(level);
-				cell.setText(p.getSecond().levelName);
+				cell.setText(((LevelNode)p.getSecond()).levelName);
 				return cell;				
-			} else {
-				// tree PositionInDivision
-				@SuppressWarnings("unchecked")
-				Pair<Integer, PositionNode> p = (Pair<Integer, PositionNode>)value;
+			}
+			if(p.getSecond() instanceof PositionNode) {
 				cell.setIcon(position);
-				cell.setText(p.getSecond().positionName);
+				cell.setText(((PositionNode)p.getSecond()).positionName);
 				return cell;
-				
 			}
 		}
-		
 
+		if(value instanceof ProfileNode) {
+			cell.setIcon(competence);
+			CompetenceNode cn = null;
+			try {
+				cn = cacheCompetence.get( ((ProfileNode)value).profileCompetenceID );
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+				cn = null;
+			}
+			cell.setText(cn == null ? "null" : cn.competenceName);			
+			return cell;
+		}
 
 		
 		return super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
 	}
 
-	public MinosTreeRenderer() {
+	public MinosTreeRenderer(LoadingCache<Integer, CompetenceNode> cacheCompetence) {
 		super();
+		this.cacheCompetence = cacheCompetence;
 		
-		// TODO Auto-generated constructor stub
 	}
 
+	private LoadingCache<Integer, CompetenceNode> cacheCompetence;
 }
 
 

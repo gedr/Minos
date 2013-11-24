@@ -8,7 +8,7 @@ import javax.swing.tree.TreePath;
 import ru.gazprom.gtnn.minos.entity.CompetenceNode;
 import ru.gazprom.gtnn.minos.entity.IndicatorNode;
 import ru.gazprom.gtnn.minos.entity.ProfileNode;
-import ru.gazprom.gtnn.minos.entity.ProfileNode.ProfileType;
+
 import ru.gazprom.gtnn.minos.util.DatabaseConnectionKeeper;
 import ru.gedr.util.tuple.Pair;
 
@@ -43,19 +43,18 @@ public class ProfileModel extends BasicModel {
 		
 		if(arg instanceof ProfileNode) {
 			ProfileNode node = (ProfileNode)arg;
-			if(node.getProfileType() == ProfileType.POSITION_DIVISION) {
-				// this profile have competence, always
-				CompetenceNode nodeCompetence = getCompetenceByID(node.profileCompetenceID);
-				// check competence reference
-				assert nodeCompetence != null : "ProfileModel.isLeaf cannot find competence : " ;
-				if(nodeCompetence == null) 
-					return true;
-				
-				//profile name equal competence
-				node.profileName = nodeCompetence.competenceName;	
-								
-				return competence.isLeaf(nodeCompetence);
-			}
+
+			// this profile have competence, always
+			CompetenceNode nodeCompetence = getCompetenceByID(node.profileCompetenceID);
+			// check competence reference
+			assert nodeCompetence != null : "ProfileModel.isLeaf cannot find competence : " ;
+			if(nodeCompetence == null) 
+				return true;
+
+			//profile name equal competence
+			node.profileName = nodeCompetence.competenceName;	
+
+			return competence.isLeaf(nodeCompetence);
 		}
 		
 		if( (arg instanceof Pair<?, ?>) ||
@@ -74,19 +73,17 @@ public class ProfileModel extends BasicModel {
 		
 		if(arg instanceof ProfileNode) {
 			ProfileNode node = (ProfileNode)arg;
-			if(node.getProfileType() == ProfileType.POSITION_DIVISION) {
-				// this profile have competence, always
-				CompetenceNode nodeCompetence = getCompetenceByID(node.profileCompetenceID);
-				// check competence reference
-				assert nodeCompetence != null : "ProfileModel.getChildCount() cannot find competence : " ;
-				if(nodeCompetence == null) 
-					return 0;
-				
-				//profile name equal competence
-				node.profileName = nodeCompetence.competenceName;	
-								
-				return competence.getChildCount(nodeCompetence);
-			}
+			// this profile have competence, always
+			CompetenceNode nodeCompetence = getCompetenceByID(node.profileCompetenceID);
+			// check competence reference
+			assert nodeCompetence != null : "ProfileModel.getChildCount() cannot find competence : " ;
+			if(nodeCompetence == null) 
+				return 0;
+
+			//profile name equal competence
+			node.profileName = nodeCompetence.competenceName;	
+
+			return competence.getChildCount(nodeCompetence);
 		}
 
 		
@@ -105,7 +102,6 @@ public class ProfileModel extends BasicModel {
 
 		if(arg instanceof ProfileNode) {
 			ProfileNode node = (ProfileNode)arg;
-			if(node.getProfileType() == ProfileType.POSITION_DIVISION) {
 				// this profile have competence, always
 				CompetenceNode nodeCompetence = getCompetenceByID(node.profileCompetenceID);
 				// check competence reference
@@ -117,7 +113,6 @@ public class ProfileModel extends BasicModel {
 				node.profileName = nodeCompetence.competenceName;	
 								
 				return competence.getChild(nodeCompetence, index);
-			}
 		}
 		
 		if( (arg instanceof Pair<?, ?>) ||
@@ -136,19 +131,17 @@ public class ProfileModel extends BasicModel {
 		
 		if(parent instanceof ProfileNode) {
 			ProfileNode node = (ProfileNode)parent;
-			if(node.getProfileType() == ProfileType.POSITION_DIVISION) {
-				// this profile have competence, always
-				CompetenceNode nodeCompetence = getCompetenceByID(node.profileCompetenceID);
-				// check competence reference
-				assert nodeCompetence != null : "ProfileModel.getChildCount() cannot find competence : " ;
-				if(nodeCompetence == null) 
-					return 0;
-				
-				//profile name equal competence
-				node.profileName = nodeCompetence.competenceName;	
-								
-				return competence.getIndexOfChild(nodeCompetence, child);
-			}
+			// this profile have competence, always
+			CompetenceNode nodeCompetence = getCompetenceByID(node.profileCompetenceID);
+			// check competence reference
+			assert nodeCompetence != null : "ProfileModel.getChildCount() cannot find competence : " ;
+			if(nodeCompetence == null) 
+				return 0;
+
+			//profile name equal competence
+			node.profileName = nodeCompetence.competenceName;	
+
+			return competence.getIndexOfChild(nodeCompetence, child);
 		}
 
 		if( (parent instanceof Pair<?, ?>) ||

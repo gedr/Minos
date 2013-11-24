@@ -14,9 +14,9 @@ import ru.gedr.util.tuple.Pair;
 
 import com.google.common.cache.LoadingCache;
 
-public class CompetenceAndCatalog extends BasicModel {
+public class CompetenceAndCatalogModel extends BasicModel {
 
-	public CompetenceAndCatalog(DatabaseConnectionKeeper kdb,
+	public CompetenceAndCatalogModel(DatabaseConnectionKeeper kdb,
 			LoadingCache<Integer, CompetenceNode> cacheCompetence,
 			BasicModel catalog,			
 			BasicModel competence,
@@ -32,6 +32,14 @@ public class CompetenceAndCatalog extends BasicModel {
 		this.flagCompetenceBeforeCatalog = flagCompetenceBeforeCatalog;
 		competencesInCatalog = new HashMap<>();
 	}		
+
+	public BasicModel getCompetenceModel() {
+		return competence;
+	}
+
+	public BasicModel getCatalogModel() {
+		return catalog;
+	}
 
 	@Override
 	public Object getRoot() {		
@@ -166,7 +174,7 @@ public class CompetenceAndCatalog extends BasicModel {
 
 		if( (obj instanceof CompetenceNode) ||
 				(obj instanceof IndicatorNode) ) {
-			competence.add(obj, path);			
+			competence.add(obj, path);		
 		}
 
 	}

@@ -37,6 +37,10 @@ public abstract class BasicModel implements TreeModel{
 		listenerList = new EventListenerList();
 	}
 
+	public DatabaseConnectionKeeper getDatabaseConnectionKeeper() {
+		return kdb;
+	}
+	
 	public void reload() { }
 	public void add(Object obj, TreePath path) throws Exception{}
 	

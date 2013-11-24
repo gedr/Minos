@@ -2,7 +2,6 @@ package ru.gazprom.gtnn.minos.entity;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import com.google.common.base.Preconditions;
 
@@ -43,7 +42,7 @@ public class CatalogNode extends BasicNode<Integer> {
 	public static final int CATALOG_MODE 	= 64;
 	public static final int CATALOG_HOST 	= 128;
 	public static final int CATALOG_ID 		= 256;
-	public static Map<String, String> names;
+	
 		
 	public void insert(DatabaseConnectionKeeper kdb, int flags) throws Exception{
 		List<RecordFeld> lst = makeListParam(flags);
@@ -69,6 +68,34 @@ public class CatalogNode extends BasicNode<Integer> {
 			e.printStackTrace();			
 			throw e;
 		}
+	}	
+	
+	@Override
+	public String toString() {
+		return catalogName + " [ " + catalogCreate + " ] " + " [ " + catalogRemove + " ] ";
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if(obj == null) 
+			return false;
+		if(obj == this)
+			return true;
+		
+		if( !(obj instanceof CatalogNode) )
+			return false;
+		
+		return (this.catalogID == ((CatalogNode)obj).catalogID ? true : false);
+	}
+
+	@Override
+	public int hashCode() {		
+		return catalogID;
+	}
+
+	@Override
+	public Integer getID() {
+		return catalogID;
 	}
 	
 	/**
@@ -103,33 +130,5 @@ public class CatalogNode extends BasicNode<Integer> {
 			lst.add(new RecordFeld(java.sql.Types.INTEGER, names.get("catalogID"), catalogID));
 		
 		return lst;
-	}
-	
-	@Override
-	public String toString() {
-		return catalogName + " [ " + catalogCreate + " ] " + " [ " + catalogRemove + " ] ";
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if(obj == null) 
-			return false;
-		if(obj == this)
-			return true;
-		
-		if( !(obj instanceof CatalogNode) )
-			return false;
-		
-		return (this.catalogID == ((CatalogNode)obj).catalogID ? true : false);
-	}
-
-	@Override
-	public int hashCode() {		
-		return catalogID;
-	}
-
-	@Override
-	public Integer getID() {
-		return catalogID;
 	}
 }

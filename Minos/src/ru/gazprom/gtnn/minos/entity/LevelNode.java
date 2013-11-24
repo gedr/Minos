@@ -4,7 +4,7 @@ import ru.gazprom.gtnn.minos.annotations.TableColumn;
 import ru.gazprom.gtnn.minos.annotations.TableName;
 
 @TableName(name = "LevelTable")
-public class LevelNode {
+public class LevelNode  extends BasicNode<Integer> {
 	public static final int LEVEL_COUNT = 5;
 	@TableColumn
 	public int levelID;
@@ -34,5 +34,10 @@ public class LevelNode {
 	@Override
 	public String toString() {
 		return levelName;
+	}
+
+	@Override
+	public Integer getID() {		
+		return levelID;
 	}
 }

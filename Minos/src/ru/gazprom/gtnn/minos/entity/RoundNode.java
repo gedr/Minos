@@ -1,6 +1,6 @@
 package ru.gazprom.gtnn.minos.entity;
 
-public class RoundNode {
+public class RoundNode extends BasicNode<Integer> {
 	public int roundID;
 	public String roundName;
 	public String roundDescr;
@@ -28,6 +28,11 @@ public class RoundNode {
 
 	@Override
 	public int hashCode() {		
+		return roundID;
+	}
+
+	@Override
+	public Integer getID() {		
 		return roundID;
 	}
 

@@ -2,11 +2,12 @@ package ru.gazprom.gtnn.minos.entity;
 
 import java.util.Calendar;
 import java.util.Date;
+
 import ru.gazprom.gtnn.minos.annotations.TableColumn;
 import ru.gazprom.gtnn.minos.annotations.TableName;
 
 @TableName(name = "PersonTable")
-public class PersonNode {
+public class PersonNode extends BasicNode<Integer> {
 	@TableColumn
 	public int personID;
 	@TableColumn
@@ -61,5 +62,9 @@ public class PersonNode {
 	static { // static initialization
 		currentDate = Calendar.getInstance();
 		currentDate.setTime(new Date());
+	}
+	@Override
+	public Integer getID() {		
+		return personID;
 	}
 }

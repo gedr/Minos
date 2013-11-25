@@ -11,7 +11,6 @@ import ru.gazprom.gtnn.minos.entity.CompetenceNode;
 import ru.gazprom.gtnn.minos.entity.IndicatorNode;
 import ru.gazprom.gtnn.minos.entity.LevelNode;
 import ru.gazprom.gtnn.minos.util.DatabaseConnectionKeeper;
-import ru.gazprom.gtnn.minos.util.TableKeeper;
 import ru.gedr.util.tuple.Pair;
 
 import com.google.common.base.Preconditions;
@@ -23,8 +22,7 @@ public class CompetenceModel extends BasicModel {
 			LoadingCache<Integer, CompetenceNode> cacheCompetence,			
 			LoadingCache<Integer, LevelNode> cacheLevel,
 			LoadingCache<Integer, IndicatorNode> cacheIndicator,
-			String sqlLoadOneCompetenceID,  // for test
-						
+//			String sqlLoadOneCompetenceID,  // for test					
 			String sqlLoadIndicatorIDs,			
 			String pattern) {			
 		super(kdb);		
@@ -33,7 +31,7 @@ public class CompetenceModel extends BasicModel {
 		this.cacheLevel = cacheLevel;
 		this.cacheIndicator = cacheIndicator;
 		
-		this.sqlLoadOneCompetenceID = sqlLoadOneCompetenceID;		
+//		this.sqlLoadOneCompetenceID = sqlLoadOneCompetenceID;		
 		this.sqlLoadIndicatorIDs = sqlLoadIndicatorIDs;
 		this.pattern = pattern;
 	}		
@@ -42,6 +40,7 @@ public class CompetenceModel extends BasicModel {
 	@Override
 	public Object getRoot() {
 		// Method wrote for test
+		/*
 		CompetenceNode cn = null;
 		try {
 			TableKeeper tk = kdb.selectRows(sqlLoadOneCompetenceID);
@@ -54,6 +53,8 @@ public class CompetenceModel extends BasicModel {
 			cn = null;
 		}
 		return cn;
+		*/
+		return null;
 	}
 
 	@Override
@@ -198,12 +199,13 @@ public class CompetenceModel extends BasicModel {
 
 	public void add(CompetenceNode source, CatalogNode dest) throws Exception{
 		source.competenceCatalogID = dest.catalogID;
-		source.competenceVariant = dest.catalogVariant;
+		source.competenceVariety = dest.catalogVariety;
 		try {
 			source.insert(kdb,
 					CompetenceNode.COMPETENCE_NAME | CompetenceNode.COMPETENCE_DESCR | 
 					CompetenceNode.COMPETENCE_ITEM | CompetenceNode.COMPETENCE_CATALOG | 
 					CompetenceNode.COMPETENCE_INCARNATIO | CompetenceNode.COMPETENCE_CHAIN_NUMBER |
+					CompetenceNode.COMPETENCE_VARIETY |
 					CompetenceNode.COMPETENCE_REMOVE | CompetenceNode.COMPETENCE_CREATE, 
 					true);
 			  
@@ -355,7 +357,7 @@ public class CompetenceModel extends BasicModel {
 	}
 
 	
-	private String sqlLoadOneCompetenceID;
+//	private String sqlLoadOneCompetenceID;
 	private String sqlLoadIndicatorIDs;
 	private String pattern;
 	

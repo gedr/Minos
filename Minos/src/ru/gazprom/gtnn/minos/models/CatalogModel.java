@@ -147,7 +147,7 @@ public class CatalogModel  extends BasicModel {
 							(CatalogNode)nodes[i - 1],
 							true,
 							CatalogNode.CATALOG_ITEM | CatalogNode.CATALOG_NAME | CatalogNode.CATALOG_PARENT | 
-							CatalogNode.CATALOG_CREATE | CatalogNode.CATALOG_REMOVE | CatalogNode.CATALOG_VARIANT);
+							CatalogNode.CATALOG_CREATE | CatalogNode.CATALOG_REMOVE | CatalogNode.CATALOG_VARIETY);
 /*					
 					CatalogNode dest = (CatalogNode)nodes[i - 1];					
 					loadSubCatalogs(dest, false);					
@@ -189,7 +189,7 @@ public class CatalogModel  extends BasicModel {
 				fEmpty = true;
 
 		source.catalogItem = (fEmpty ? 1 : dest.subCatalogs.size() + 1); // set item value
-		source.catalogVariant = dest.catalogVariant;
+		source.catalogVariety = dest.catalogVariety;
 		source.catalogParent = dest.catalogID;
 
 		source.insert(kdb, flags);

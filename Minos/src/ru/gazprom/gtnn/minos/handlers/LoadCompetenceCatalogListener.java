@@ -131,7 +131,7 @@ public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 			BasicModel model = ((CompetenceAndCatalogModel)tree.getModel()).getCatalogModel();
 			((CatalogModel)model).add(nodeCatalog, dest, false, 
 					CatalogNode.CATALOG_NAME | CatalogNode.CATALOG_PARENT | CatalogNode.CATALOG_ITEM |
-					CatalogNode.CATALOG_CREATE | CatalogNode.CATALOG_REMOVE | CatalogNode.CATALOG_VARIANT);
+					CatalogNode.CATALOG_CREATE | CatalogNode.CATALOG_REMOVE | CatalogNode.CATALOG_VARIETY);
 		}
 
 		Preconditions.checkArgument(nodeCatalog.catalogID != -1, "catalogLoader() : cannot load  CatalogNode" + nodeCatalog);

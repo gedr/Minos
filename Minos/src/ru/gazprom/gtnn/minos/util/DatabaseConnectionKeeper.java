@@ -179,9 +179,8 @@ public class DatabaseConnectionKeeper {
 				: con.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS) );
 		
 		for(int i = 0; i < vals.size(); i++) {
-			System.out.println(vals.get(i).val);
-			// stmt.setObject(i + 1, vals.get(i).val);
-			
+			//System.out.println(vals.get(i).val);
+		
 			switch(vals.get(i).dataType) {					
 			case java.sql.Types.CLOB:
 				stmt.setClob(i + 1, (Reader)vals.get(i).val);														

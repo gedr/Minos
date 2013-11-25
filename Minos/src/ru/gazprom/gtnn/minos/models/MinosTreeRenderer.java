@@ -80,30 +80,48 @@ public class MinosTreeRenderer extends DefaultTreeCellRenderer {
 			}
 		}
 
+		
 		if(value instanceof ProfileNode) {
 			cell.setIcon(competence);
 			CompetenceNode cn = null;
+			LevelNode ln = null;
 			try {
 				cn = cacheCompetence.get( ((ProfileNode)value).profileCompetenceID );
+				ln = cacheLevel.get(((ProfileNode)value).profileMinLevel );
+				
 			} catch (ExecutionException e) {
 				e.printStackTrace();
 				cn = null;
+				ln = null;
 			}
-			cell.setText(cn == null ? "null" : cn.competenceName);			
+			sb.delete(0, sb.length());
+			sb.append(cn == null ? "null" : cn.competenceName).
+			append(" [ Минимальный уровень : ").
+			append(ln == null ? "null"  : ln.levelName).
+			append(" ] "); 
+			
+			cell.setText(sb.toString());			
 			return cell;
 		}
+
 
 		
 		return super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
 	}
 
-	public MinosTreeRenderer(LoadingCache<Integer, CompetenceNode> cacheCompetence) {
+	public MinosTreeRenderer(LoadingCache<Integer, CompetenceNode> cacheCompetence,
+			LoadingCache<Integer, LevelNode> cacheLevel) {
 		super();
 		this.cacheCompetence = cacheCompetence;
+		this.cacheLevel = cacheLevel;
+		sb = new StringBuilder();
 		
 	}
 
 	private LoadingCache<Integer, CompetenceNode> cacheCompetence;
+	private LoadingCache<Integer, LevelNode> cacheLevel;
+	private StringBuilder sb; 
+
 }
 
 

@@ -46,7 +46,7 @@ public class MinosCacheLoader<KeyT, ValueT> extends CacheLoader<KeyT, ValueT> {
 	@Override
 	public ValueT load(KeyT arg) throws Exception {		
 		String sql = kdb.makeSQLString(sqlForLoadRow, patternID, arg.toString());		
-		Preconditions.checkNotNull(sql, "MinosCacheLoader.load() : makeSQLString() return null");		
+		Preconditions.checkNotNull(sql, "MinosCacheLoader.load() : makeSQLString() return null (" + sqlForLoadRow + " )");		
 		TableKeeper tk = kdb.selectRows(sql);		
 		Preconditions.checkNotNull(tk, "MinosCacheLoader.load() : selectRows() return null");		
 		Preconditions.checkState(tk.getRowCount() == 1, "MinosCacheLoader.load() : selectRows() return incorrect row count (" + tk.getRowCount() + ")");	
@@ -68,7 +68,7 @@ public class MinosCacheLoader<KeyT, ValueT> extends CacheLoader<KeyT, ValueT> {
 		}
 
 		String sql = kdb.makeSQLString(sqlForLoadRow, patternID, sb.toString());
-		Preconditions.checkNotNull(sql, "MinosCacheLoader.loadAll() : makeSQLString() return null");
+		Preconditions.checkNotNull(sql, "MinosCacheLoader.load() : makeSQLString() return null (" + sqlForLoadRow + " )");	
 		TableKeeper tk = kdb.selectRows(sql);
 		Preconditions.checkNotNull(tk, "MinosCacheLoader.loadAll() : selectRows() return null");
 		for(int i = 1; i <= tk.getRowCount(); i++) {			

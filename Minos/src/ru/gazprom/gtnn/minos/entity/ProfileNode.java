@@ -29,7 +29,7 @@ public class ProfileNode extends BasicNode<Integer>{
 	@TableColumn
 	public int profileMinLevel;
 	@TableColumn
-	public int profileVariant;
+	public int profileVariety;
 	@TableColumn
 	public java.util.Date profileCreate;
 	@TableColumn
@@ -47,7 +47,7 @@ public class ProfileNode extends BasicNode<Integer>{
 	public static final int PROFILE_POSITION = 16;
 	public static final int PROFILE_POSITIONB = 32;
 	public static final int PROFILE_MIN_LEVEL = 64;
-	public static final int PROFILE_VARIANT = 128;
+	public static final int PROFILE_VARIETY = 128;
 	public static final int PROFILE_COMPETENCE_INCARNATIO = 256;
 	
 	public static final int PROFILE_CREATE = 512;
@@ -108,8 +108,8 @@ public class ProfileNode extends BasicNode<Integer>{
 			lst.add(new RecordFeld(java.sql.Types.INTEGER, names.get("profilePositionBID"), profilePositionBID));
 		if(((flags & PROFILE_MIN_LEVEL) != 0) && (names.get("profileMinLevel") != null) )
 			lst.add(new RecordFeld(java.sql.Types.INTEGER, names.get("profileMinLevel"), profileMinLevel));
-		if(((flags & PROFILE_VARIANT) != 0) && (names.get("profileVariant") != null) )
-			lst.add(new RecordFeld(java.sql.Types.INTEGER, names.get("profileVariant"), profileVariant));
+		if(((flags & PROFILE_VARIETY) != 0) && (names.get("profileVariety") != null) )
+			lst.add(new RecordFeld(java.sql.Types.INTEGER, names.get("profileVariety"), profileVariety));
 		if(((flags & PROFILE_COMPETENCE_INCARNATIO) != 0) && (names.get("profileCompetenceIncarnatio") != null) )
 			lst.add(new RecordFeld(java.sql.Types.INTEGER, names.get("profileCompetenceIncarnatio"), profileCompetenceIncarnatio));
 		if(((flags & PROFILE_ID) != 0) && (names.get("profileID") != null) )

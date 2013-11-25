@@ -19,7 +19,6 @@ public class AddCatalogListener implements ActionListener{
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		String inputValue = JOptionPane.showInputDialog("Please input a value");     
-		System.out.println(inputValue);
 		if(inputValue != null) {
 			CatalogNode cn = new CatalogNode();
 			cn.catalogID = 1;
@@ -34,6 +33,6 @@ public class AddCatalogListener implements ActionListener{
 				e2.printStackTrace();
 			}
 		}
-		//t.updateUI();		
+		t.updateUI();		
 	}
 }

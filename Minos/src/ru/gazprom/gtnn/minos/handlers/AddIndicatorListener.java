@@ -19,7 +19,6 @@ public class AddIndicatorListener implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		String inputValue = JOptionPane.showInputDialog("Please input a indicator");     
-		System.out.println(inputValue);
 		if(inputValue != null) {
 			IndicatorNode source = new IndicatorNode();								
 			source.indicatorName = inputValue;
@@ -31,6 +30,6 @@ public class AddIndicatorListener implements ActionListener {
 				e2.printStackTrace();
 			}
 		}
-		//t.updateUI();
+		t.updateUI();
 	}	
 }

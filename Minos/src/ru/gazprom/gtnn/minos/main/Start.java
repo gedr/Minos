@@ -3,6 +3,7 @@ package ru.gazprom.gtnn.minos.main;
 
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
+import java.awt.event.KeyEvent;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,9 +11,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.ActionMap;
 import javax.swing.DropMode;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -22,6 +26,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JToolBar;
 import javax.swing.JTree;
+import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.tree.TreeCellRenderer;
@@ -32,6 +37,7 @@ import ru.gazprom.gtnn.minos.entity.*;
 import ru.gazprom.gtnn.minos.handlers.AddCatalogListener;
 import ru.gazprom.gtnn.minos.handlers.AddCompetenceListener;
 import ru.gazprom.gtnn.minos.handlers.AddIndicatorListener;
+import ru.gazprom.gtnn.minos.handlers.EditProfileAndPositionAction;
 import ru.gazprom.gtnn.minos.handlers.LoadCompetenceCatalogListener;
 import ru.gazprom.gtnn.minos.handlers.LoadCompetenceFileListener;
 import ru.gazprom.gtnn.minos.handlers.ReloadListener;
@@ -91,7 +97,7 @@ public class Start {
 				map.put("personBirthDate", "Drojd");
 				map.put("personSex", "Sex");
 				
-				map.put("CatalogTable", "CATALOG");
+				map.put("CatalogTable", "MinosCatalog");
 				map.put("catalogID", "id");
 				map.put("catalogName", "name");
 				map.put("catalogHost", "host");
@@ -100,8 +106,9 @@ public class Start {
 				map.put("catalogItem", "item");
 				map.put("catalogCreate", "date_create");
 				map.put("catalogRemove", "date_remove");
+				map.put("catalogVariety", "variety");
 				
-				map.put("CompetenceTable", "COMPETENCE");
+				map.put("CompetenceTable", "MinosCompetence");
 				map.put("competenceID", "id");
 				map.put("competenceName", "name");
 				map.put("competenceHost", "host");
@@ -113,12 +120,14 @@ public class Start {
 				map.put("competenceChainNumber", "chain_number");
 				map.put("competenceCreate", "date_create");
 				map.put("competenceRemove", "date_remove");
+				map.put("competenceVariety", "variety");
 				
+				map.put("LevelTable", "MinosLevel");
 				map.put("levelID", "id");
 				map.put("levelName", "name");
 				map.put("levelPrice", "price");
 				
-				map.put("IndicatorTable", "INDICATOR");
+				map.put("IndicatorTable", "MinosIndicator");
 				map.put("indicatorID", "id");
 				map.put("indicatorName", "name");
 				map.put("indicatorItem", "item");
@@ -139,7 +148,7 @@ public class Start {
 				map.put("profileCompetenceID", "competence_id");
 				map.put("profileCompetenceIncarnatio", "competence_incarnatio");
 				map.put("profileMinLevel", "min_level");
-				map.put("profileVariant", "variant");
+				map.put("profileVariety", "variety");
 				map.put("profileCreate", "date_create");
 				map.put("profileRemove", "date_remove");
 				map.put("profileHost", "host");
@@ -184,34 +193,34 @@ public class Start {
 				LoadingCache<Integer, CatalogNode> cacheCatalog = CacheBuilder.
 						newBuilder().
 						build(new MinosCacheLoader<Integer, CatalogNode>(CatalogNode.class, kdbM, 
-								"select id, name, item, parent, host, mode, date_create, date_remove from CATALOG where id in (%id%) order by item",
+								"select id, name, item, parent, host, mode, date_create, date_remove, variety from MinosCatalog where id in (%id%) order by item",
 								"%id%", map));
 
 				LoadingCache<Integer, CompetenceNode> cacheCompetence = CacheBuilder.
 						newBuilder().
 						build(new MinosCacheLoader<Integer, CompetenceNode>(CompetenceNode.class, kdbM, 
-								"select id, incarnatio, chain_number, name, description, catalog_id, item, date_create, date_remove from COMPETENCE where (id in (%id%)) and (GetDate() between date_create and date_remove) order by item",
+								"select id, incarnatio, chain_number, name, description, catalog_id, item, date_create, date_remove, variety from MinosCompetence where (id in (%id%)) and (GetDate() between date_create and date_remove) order by item",
 								"%id%", map));
 
 				LoadingCache<Integer, LevelNode> cacheLevel = CacheBuilder.
 						newBuilder().
 						build(new MinosCacheLoader<Integer, LevelNode>(LevelNode.class, kdbM, 
-								"select id, name, price from LEVEL where id in (%id%) order by price",
+								"select id, name, price from MinosLevel where id in (%id%) order by price",
 								"%id%", map));
 
 				LoadingCache<Integer, IndicatorNode> cacheIndicator = CacheBuilder.
 						newBuilder().
 						build(new MinosCacheLoader<Integer, IndicatorNode>(IndicatorNode.class, kdbM, 
-								"select id, name, level_id, competence_incarnatio, item, date_create, date_remove, host  from INDICATOR where (id in (%id%)) and (GetDate() between date_create and date_remove) order by item",
+								"select id, name, level_id, competence_incarnatio, item, date_create, date_remove, host  from MinosIndicator where (id in (%id%)) and (GetDate() between date_create and date_remove) order by item",
 								"%id%", map));
 				
 				LoadingCache<Integer, ProfileNode> cacheProfile = CacheBuilder.
 						newBuilder().
 						build(new MinosCacheLoader<Integer, ProfileNode>(ProfileNode.class, kdbM, 
 								"select p.id, p.name, p.division_id, p.positionB_id, p.position_id, " +
-										"p.item, p.min_level, p.variant, p.date_create, p.date_remove, p.host, " +
+										"p.item, p.min_level, p.variety, p.date_create, p.date_remove, p.host, " +
 										"p.competence_incarnatio, c.id as competence_id from MinosProfile p " +
-										"join COMPETENCE c on c.incarnatio = p.competence_incarnatio " +
+										"join MinosCompetence c on c.incarnatio = p.competence_incarnatio " +
 										"where GETDATE() between p.date_create and p.date_remove " +
 										"and GETDATE() between c.date_create and c.date_remove " +
 										"and p.id in (%id%)",
@@ -231,12 +240,14 @@ public class Start {
 						"%id%", true);
 				
 				BasicModel catalogModel = new CatalogModel(kdbM, cacheCatalog, 
-						"select id from CATALOG where (parent = %id%) and (GetDate() between date_create and date_remove) order by item", "%id%");
+						"select id from MinosCatalog where (parent = %id%) and (GetDate() between date_create and date_remove) order by item", "%id%");
 				
-				BasicModel competenceModel = new CompetenceModel(kdbM, cacheCompetence, cacheLevel, cacheIndicator, "select 1", "select id from INDICATOR where competence_incarnatio = %id%", "%id%");
+				BasicModel competenceModel = new CompetenceModel(kdbM, cacheCompetence, cacheLevel, cacheIndicator, 
+						//"select 1", 
+						"select id from MinosIndicator where competence_incarnatio = %id%", "%id%");
 
 				BasicModel competenceAndCatalogModel = new CompetenceAndCatalogModel(kdbM, cacheCompetence, catalogModel, competenceModel,
-						"select id from COMPETENCE where catalog_id = %id%", "%id%", true);
+						"select id from MinosCompetence where catalog_id = %id%", "%id%", true);
 
 				BasicModel profileModel = new ProfileModel(kdbM, competenceModel, cacheCompetence);			
 						
@@ -244,15 +255,15 @@ public class Start {
 				String[] arr = {"%id1%", "%id2%"};
 				BasicModel profileAndPositionInDivisionModel = new ProfileAndPositionInDivision(kdbM, cacheProfile, positionInDivisionModel, profileModel,
 						"select p.id from MinosProfile p " +
-						"join COMPETENCE c on c.incarnatio = p.competence_incarnatio " +
+						"join MinosCompetence c on c.incarnatio = p.competence_incarnatio " +
 						"where GETDATE() between p.date_create and p.date_remove " +
 						"and GETDATE() between c.date_create and c.date_remove " +
 						"and division_id = %id1% and position_id = %id2% " + 
-						"and variant = 1 ",
+						"and p.variety = 1 ",
 						arr);
 
 
-				TreeCellRenderer tcr = new MinosTreeRenderer(cacheCompetence);
+				TreeCellRenderer tcr = new MinosTreeRenderer(cacheCompetence, cacheLevel);
 				
 				JTree treeCompetenceAndCatalog = new JTree(competenceAndCatalogModel);
 				treeCompetenceAndCatalog.setRootVisible(false);				
@@ -260,7 +271,6 @@ public class Start {
 				treeCompetenceAndCatalog.setDragEnabled(true);
 				treeCompetenceAndCatalog.setTransferHandler(new MyTransferHandler("tcc"));
 				treeCompetenceAndCatalog.setDropMode(DropMode.ON);
-				treeCompetenceAndCatalog.setName("CompetenceAndCatalog");
 				
 				JTree treeCatalog = new JTree(catalogModel);
 				treeCatalog.setRootVisible(false);
@@ -272,12 +282,22 @@ public class Start {
 				tper.setTransferHandler();
 				*/
 				JTree treeProfileAndPositionInDivision = new JTree(profileAndPositionInDivisionModel); //tmpos);
-				treeProfileAndPositionInDivision.setName("Position in Division");
 				treeProfileAndPositionInDivision.setCellRenderer(tcr);
 				treeProfileAndPositionInDivision.setDragEnabled(true);
 				treeProfileAndPositionInDivision.setTransferHandler(new MyTransferHandler("tpos"));
 				treeProfileAndPositionInDivision.setDropMode(DropMode.ON);
-				treeProfileAndPositionInDivision.setName("PositionInDivision");
+				
+
+				String action = "changeWnd";
+				InputMap im =treeProfileAndPositionInDivision.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+				im.put(KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0), action);
+
+				ActionMap actionMap = treeProfileAndPositionInDivision.getActionMap();
+				actionMap.put(action, new EditProfileAndPositionAction(treeProfileAndPositionInDivision, cacheLevel));
+				treeProfileAndPositionInDivision.setActionMap(actionMap);
+				
+				
+				
 				
 				JTree treeCompetence = new JTree(competenceModel);
 				treeCompetence.setName("Competence");
@@ -444,54 +464,6 @@ public class Start {
 		//test2();
 		//setLaF("Nimbus");
 		makeUI();
-		if(true)
-			return;
-		
-		try {
-			
-			
-			Map<String, String> map = new HashMap<>();
-			map.put("personID", "tPersonaId");
-			map.put("personSurname", "F");
-			map.put("personName", "I");
-			map.put("personPatronymic", "O");
-			map.put("personBirthDate", "Drojd");
-			map.put("personSex", "Sex");
-			
-			
-			String connectionUrl = "jdbc:sqlserver://192.168.56.2:1433;databaseName=serg;user=sa;password=Q11W22e33;";
-			Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-			DatabaseConnectionKeeper kdb = new DatabaseConnectionKeeper(connectionUrl, null, null);
-			kdb.connect();
-			
-			LoadingCache<Integer, PersonNode> cachePerson = CacheBuilder.
-					newBuilder().
-					build(new MinosCacheLoader<Integer, PersonNode>(PersonNode.class, kdb, 
-							"select tPersonaId, F, I, O, Drojd, Sex from tPersona where tPersonaId in (%id%)",
-							"%id%", map));
-
-			TableKeeper tk = kdb.selectRows("select top 100 tPersonaId from tPersona");
-			List<Integer> lst = new ArrayList<>();			
-			for(int i = 1; i <= tk.getRowCount(); i++)
-				lst.add((Integer)tk.getValue(i,  1));
-			cachePerson.getAll(lst);
-				
-							
-			for(int i = 1; i <= tk.getRowCount(); i++ ) {				
-				System.out.println(cachePerson.get((Integer)tk.getValue(i, 1)));
-			}
-			
-			System.out.println("refresh");
-			cachePerson.refresh((Integer)tk.getValue(1, 1));
-			System.out.println(cachePerson.get((Integer)tk.getValue(1, 1)));
-			
-			
-		
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-		
-		
 	}
 
 }

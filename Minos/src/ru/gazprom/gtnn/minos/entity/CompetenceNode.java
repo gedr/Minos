@@ -21,7 +21,7 @@ public class CompetenceNode extends BasicNode<Integer> {
 	@TableColumn
 	public int competenceItem;
 	@TableColumn
-	public int competenceVariant;	
+	public int competenceVariety;	
 	@TableColumn
 	public String competenceHost;
 	@TableColumn
@@ -42,7 +42,7 @@ public class CompetenceNode extends BasicNode<Integer> {
 	public static final int COMPETENCE_NAME = 1;
 	public static final int COMPETENCE_DESCR = 2;
 	public static final int COMPETENCE_ITEM = 4;
-	public static final int COMPETENCE_VARIANT = 8;
+	public static final int COMPETENCE_VARIETY = 8;
 	public static final int COMPETENCE_HOST = 16;
 	public static final int COMPETENCE_MODE = 32;
 	public static final int COMPETENCE_CATALOG = 64;
@@ -111,8 +111,8 @@ public class CompetenceNode extends BasicNode<Integer> {
 
 		if(((flags & COMPETENCE_ITEM) != 0) && (names.get("competenceItem") != null) )
 			lst.add(new RecordFeld(java.sql.Types.INTEGER, names.get("competenceItem"), competenceItem));
-		if(((flags & COMPETENCE_ITEM) != 0) && (names.get("competenceVariant") != null) )
-			lst.add(new RecordFeld(java.sql.Types.INTEGER, names.get("competenceVariant"), competenceVariant));
+		if(((flags & COMPETENCE_VARIETY) != 0) && (names.get("competenceVariety") != null) )
+			lst.add(new RecordFeld(java.sql.Types.INTEGER, names.get("competenceVariety"), competenceVariety));
 		if(((flags & COMPETENCE_MODE) != 0) && (names.get("competenceMode") != null) )
 			lst.add(new RecordFeld(java.sql.Types.INTEGER, names.get("competenceMode"), competenceMode));
 		if(((flags & COMPETENCE_CATALOG) != 0) && (names.get("competenceCatalogID") != null) )

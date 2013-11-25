@@ -25,7 +25,7 @@ public class CatalogNode extends BasicNode<Integer> {
 	@TableColumn
 	public int catalogItem;
 	@TableColumn
-	public int catalogVariant;
+	public int catalogVariety;
 	@TableColumn
 	public java.util.Date catalogCreate;
 	@TableColumn
@@ -36,7 +36,7 @@ public class CatalogNode extends BasicNode<Integer> {
 	public static final int CATALOG_NAME 	= 1;
 	public static final int CATALOG_PARENT 	= 2;
 	public static final int CATALOG_ITEM 	= 4;
-	public static final int CATALOG_VARIANT = 8;
+	public static final int CATALOG_VARIETY = 8;
 	public static final int CATALOG_CREATE 	= 16;
 	public static final int CATALOG_REMOVE 	= 32;
 	public static final int CATALOG_MODE 	= 64;
@@ -116,8 +116,8 @@ public class CatalogNode extends BasicNode<Integer> {
 			lst.add(new RecordFeld(java.sql.Types.INTEGER, names.get("catalogParent"), catalogParent));
 		if(((flags & CATALOG_ITEM) != 0) && (names.get("catalogItem") != null) )
 			lst.add(new RecordFeld(java.sql.Types.INTEGER, names.get("catalogItem"), catalogItem));
-		if(((flags & CATALOG_ITEM) != 0) && (names.get("catalogVariant") != null) )
-			lst.add(new RecordFeld(java.sql.Types.INTEGER, names.get("catalogVariant"), catalogItem));
+		if(((flags & CATALOG_VARIETY) != 0) && (names.get("catalogVariety") != null) )
+			lst.add(new RecordFeld(java.sql.Types.INTEGER, names.get("catalogVariety"), catalogVariety));
 		if(((flags & CATALOG_CREATE) != 0) && (names.get("catalogCreate") != null) )
 			lst.add(new RecordFeld(java.sql.Types.DATE, names.get("catalogCreate"), catalogCreate));
 		if(((flags & CATALOG_REMOVE) != 0) && (names.get("catalogRemove") != null) )

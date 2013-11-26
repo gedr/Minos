@@ -13,6 +13,7 @@ import ru.gazprom.gtnn.minos.util.DatabaseConnectionKeeper;
 import ru.gedr.util.tuple.Pair;
 
 public class MakeProfileAction extends AbstractAction {
+	private static final long serialVersionUID = 1L;
 
 	private JTree competenceTree;
 	private JTree profileTree;
@@ -29,7 +30,7 @@ public class MakeProfileAction extends AbstractAction {
 			return;
 
 		TreePath[] competencePaths = competenceTree.getSelectionPaths();
-		List<Integer> lstCompetenceID = new ArrayList();
+		List<Integer> lstCompetenceID = new ArrayList<>();
 		
 		// load selected competence node
 		for(int i = 0; i < competencePaths.length; i++) {
@@ -43,16 +44,14 @@ public class MakeProfileAction extends AbstractAction {
 			return;
 		
 		TreePath[] positionPaths = profileTree.getSelectionPaths();
-		List<Integer> lstPositionID = new ArrayList();
 		// load selected position node
 		ProfileNode profileNode = new ProfileNode();
 		profileNode.profileRemove = BasicModel.endTime;
-		
-		
 
 		DatabaseConnectionKeeper kdb = ((BasicModel)competenceTree.getModel() ).getDatabaseConnectionKeeper();
 		for(int i = 0; i < positionPaths.length; i++) {
 			if(positionPaths[i].getLastPathComponent() instanceof Pair<?, ?>) {
+				@SuppressWarnings("unchecked")
 				Pair<Integer, PositionNode> p = (Pair<Integer, PositionNode> ) positionPaths[i].getLastPathComponent() ;
 				profileNode.profileDivisionID = p.getFirst();
 				profileNode.profilePositionID = p.getSecond().positionID;

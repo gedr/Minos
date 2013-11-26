@@ -22,6 +22,8 @@ public class PersonNode extends BasicNode<Integer> {
 	public Date personBirthDate;
 	
 	public PositionNode personPosition;
+	
+	
 	@Override
 	public boolean equals(Object obj) {
 		if(obj == null) 

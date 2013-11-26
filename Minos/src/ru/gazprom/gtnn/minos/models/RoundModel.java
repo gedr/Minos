@@ -3,8 +3,10 @@ package ru.gazprom.gtnn.minos.models;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JLabel;
 
 import com.google.common.base.Preconditions;
 import com.google.common.cache.LoadingCache;
@@ -14,45 +16,115 @@ import ru.gazprom.gtnn.minos.util.DatabaseConnectionKeeper;
 import ru.gazprom.gtnn.minos.util.TableKeeper;
 
 public class RoundModel extends DefaultComboBoxModel<RoundNode> {
+	private static final long serialVersionUID = 1L;
+	
 	private DatabaseConnectionKeeper kdb;
 	private LoadingCache<Integer, RoundNode> cacheRound;
 	private String sqlLoadRoundIDs;
+	private List<Integer> roundIDs;
+	private int selectedRoundID = 0;
+	private boolean flagHaveSelectedRound = false;
+	private StringBuilder sb;
+
+	private JLabel roundLabel;
 
 	public RoundModel(DatabaseConnectionKeeper kdb,
-			LoadingCache<Integer, RoundNode> cacheRound,			
+			LoadingCache<Integer, RoundNode> cacheRound,
+			JLabel roundLabel,
 			String sqlLoadRoundIDs) {			
 		this.kdb = kdb;
 		this.cacheRound = cacheRound;
 		this.sqlLoadRoundIDs = sqlLoadRoundIDs;
+		this.roundLabel = roundLabel;
+		sb = new StringBuilder();
+		roundIDs = loadRoundIDs();
 	}		
 
+	public DatabaseConnectionKeeper getDatabaseConnectionKeeper() {
+		return kdb;
+	}	
+	
+	
 	@Override
-	public RoundNode getElementAt(int arg0) {
-		// TODO Auto-generated method stub
+	public void addElement(RoundNode arg) {
+		cacheRound.put(arg.roundID, arg);
+		selectedRoundID = arg.roundID;
+		flagHaveSelectedRound = true;
+		roundIDs.add(arg.roundID);		
+	}
+
+	@Override
+	public int getIndexOf(Object arg) {
+		if( !(arg instanceof RoundNode) )
+			return 0;
+		try {
+			for(int i = 0; i < roundIDs.size(); i++) {
+				if(cacheRound.get(roundIDs.get(i)).roundID == ((RoundNode)arg).roundID)
+					return i;
+			}
+		} catch (ExecutionException e) {
+			e.printStackTrace();
+		}
+
+		return 0;
+	}
+
+	@Override
+	public RoundNode getElementAt(int arg) {
+		if( (0 <= arg) && (arg < roundIDs.size()) ) {
+			RoundNode node = null;
+			try {
+				node = cacheRound.get( roundIDs.get(arg) );
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+				node = null;				
+			}
+			return node;
+		}	
+
 		return null;
 	}
 
 	@Override
 	public int getSize() {
-		// TODO Auto-generated method stub
-		return 0;
+		return roundIDs.size();
 	}
 
 
 	@Override
-	public Object getSelectedItem() {
-		// TODO Auto-generated method stub
+	public Object getSelectedItem() {		
+		if(flagHaveSelectedRound) {
+			RoundNode node = null;
+			try {
+				node = cacheRound.get(selectedRoundID);
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+				node = null;				
+			}
+			return node;
+		}
 		return null;
 	}
 
+	
 	@Override
-	public void setSelectedItem(Object arg0) {
-		// TODO Auto-generated method stub
+	public void setSelectedItem(Object arg) {
+		if(arg == null)
+			return;
+		if( !(arg instanceof RoundNode) )
+			return;
 		
+		flagHaveSelectedRound = true;
+		RoundNode node = (RoundNode)arg;
+		selectedRoundID = node.roundID;		
+		
+		sb.delete(0, sb.length());
+		sb.append("Раунд оценки: ").append(node.roundName).append("     описание: ").append(node.roundDescr).
+		append("     [ ").append(node.roundStart).append(" ]  -  [ ").append(node.roundStop).append(" ] ");		
+		roundLabel.setText(sb.toString());
 	}
-
-
 		
+	
 	private List<Integer> loadRoundIDs() {		
 		List<Integer> lst = Collections.emptyList();
 
@@ -77,6 +149,5 @@ public class RoundModel extends DefaultComboBoxModel<RoundNode> {
 			lst = Collections.emptyList();
 		}		
 		return lst;
-	}	
-
+	}
 }

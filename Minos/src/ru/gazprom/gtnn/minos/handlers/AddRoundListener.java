@@ -76,6 +76,10 @@ public class AddRoundListener  implements ActionListener {
 			try {
 				round.roundStart = df.parse( dateField1.getText() );
 				round.roundStop = df.parse( dateField2.getText() );
+				if( (round.roundStop.getTime() - round.roundStart.getTime()) < 0) {
+					JOptionPane.showMessageDialog(null, "Ошибочный временой промежуток");
+					return;
+				}
 				round.insert(kdb, 
 						RoundNode.ROUND_NAME | RoundNode.ROUND_DESCR | RoundNode.ROUND_REMOVE |
 						RoundNode.ROUND_START | RoundNode.ROUND_STOP);

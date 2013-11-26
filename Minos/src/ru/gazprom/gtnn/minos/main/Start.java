@@ -56,6 +56,7 @@ import ru.gazprom.gtnn.minos.models.PersonInDivisionModel;
 import ru.gazprom.gtnn.minos.models.PositionInDivisionModel;
 import ru.gazprom.gtnn.minos.models.ProfileAndPositionInDivision;
 import ru.gazprom.gtnn.minos.models.ProfileModel;
+import ru.gazprom.gtnn.minos.models.RoundModel;
 import ru.gazprom.gtnn.minos.util.*;
 
 
@@ -257,11 +258,13 @@ public class Start {
 								"select id, item, value, descr, variety, external_id1, external_id2, external_id3, date_create, date_remove, host from MinosStringAttr where id in (%id%)",
 								"%id%", map));
 
-				LoadingCache<Integer, StringAttrNode> cacheRound = CacheBuilder.
+				LoadingCache<Integer, RoundNode> cacheRound = CacheBuilder.
 						newBuilder().
-						build(new MinosCacheLoader<Integer, StringAttrNode>(StringAttrNode.class, kdbM,
+						build(new MinosCacheLoader<Integer, RoundNode>(RoundNode.class, kdbM,
 								"select id, name, descr, date_create, date_remove, host, round_start, round_stop from MinosRound where id in (%id%)",
 								"%id%", map));
+
+				
 				
 				
 				
@@ -337,11 +340,9 @@ public class Start {
 				ActionMap actionMap = treeProfileAndPositionInDivision.getActionMap();
 				actionMap.put(action, new EditProfileAndPositionAction(treeProfileAndPositionInDivision, cacheLevel));
 				treeProfileAndPositionInDivision.setActionMap(actionMap);
-				
-				
-				
+
 				JFrame frm = new JFrame("test");
-				
+
 				JTree treeCompetence = new JTree(competenceModel);
 				treeCompetence.setName("Competence");
 				treeCompetence.setDragEnabled(true);
@@ -394,8 +395,14 @@ public class Start {
 						new JScrollPane(new JTree(profileAndPositionInDivisionModel)), new JScrollPane(treePersonInDivision)); //tmpos
 				
 				
+				
+				
+				JPanel panelMinos_Sinner = new JPanel(new BorderLayout());
 				JSplitPane splitPane3 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, new JScrollPane(new JTree(personInDivisionModel)),new JScrollPane(new JTree(personInDivisionModel)));
 				splitPane3.setDividerLocation(0.5);
+				panelMinos_Sinner.add(splitPane3, BorderLayout.CENTER);
+				panelMinos_Sinner.add(new JButton("add"), BorderLayout.SOUTH);
+				
 				
 				JPanel roundRating = new JPanel();
 				roundRating.setLayout(new BorderLayout());
@@ -403,18 +410,26 @@ public class Start {
 				
 				JButton btnAddRound = new JButton("+");
 				btnAddRound.addActionListener(new AddRoundListener(kdbM));
+				
+				JLabel roundLabel = new JLabel();
+				
+				JComboBox<RoundNode> cmb = new JComboBox<>(); 
+				cmb.setModel( new RoundModel(kdbM, cacheRound, roundLabel, "select id from MinosRound") );			
+				
+
 				JToolBar tb2 = new JToolBar();
-				tb2.add(btnAddRound); //new JButton(new ImageIcon("C:\\tmp\\icon\\add.png")) );
-				JComboBox<String> cmb = new JComboBox<String>(); 
+				tb2.add(btnAddRound);
 				tb2.add(cmb);
 	
 				roundRating.add(tb2, BorderLayout.NORTH);
-				roundRating.add(new JLabel("Раунд оценки: ???, название: ???,  приказ: ???, дата начала: ???, дата конца: ???"), BorderLayout.SOUTH);
+				roundRating.add(roundLabel, BorderLayout.SOUTH);
 				
 				JTable table = new JTable(3, 2);				
 				roundRating.add(new JScrollPane(table));
 											
-				JSplitPane split4 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, splitPane3, roundRating);
+				//JSplitPane split4 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, splitPane3, roundRating);
+				JSplitPane split4 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, panelMinos_Sinner, roundRating);
+				
 				split4.setDividerLocation(300);				
 				
 				JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);

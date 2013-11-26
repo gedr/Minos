@@ -44,7 +44,7 @@ public abstract class BasicModel implements TreeModel{
 	public void reload() { }
 	public void add(Object obj, TreePath path) throws Exception{}
 	
-	protected <T, P> List<T> loadChildIDs(String sql, String pattern, P parentID) {		
+	public <T, P> List<T> loadChildIDs(String sql, String pattern, P parentID) {		
 		List<T> lst = Collections.emptyList();
 		try {			
 			String request = kdb.makeSQLString(sql, pattern, parentID.toString());

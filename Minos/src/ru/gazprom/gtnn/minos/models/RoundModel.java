@@ -4,18 +4,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import javax.swing.ComboBoxModel;
-import javax.swing.event.ListDataListener;
+import javax.swing.DefaultComboBoxModel;
 
 import com.google.common.base.Preconditions;
 import com.google.common.cache.LoadingCache;
 
-import ru.gazprom.gtnn.minos.entity.CatalogNode;
 import ru.gazprom.gtnn.minos.entity.RoundNode;
 import ru.gazprom.gtnn.minos.util.DatabaseConnectionKeeper;
 import ru.gazprom.gtnn.minos.util.TableKeeper;
 
-public class RoundModel implements ComboBoxModel<RoundNode> {
+public class RoundModel extends DefaultComboBoxModel<RoundNode> {
 	private DatabaseConnectionKeeper kdb;
 	private LoadingCache<Integer, RoundNode> cacheRound;
 	private String sqlLoadRoundIDs;
@@ -54,43 +52,24 @@ public class RoundModel implements ComboBoxModel<RoundNode> {
 	}
 
 
-	
-	
-	
-	
-	@Override
-	public void addListDataListener(ListDataListener arg0) {
-		// TODO Auto-generated method stub
 		
-	}
-
-	@Override
-	public void removeListDataListener(ListDataListener arg0) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	
-	private List<Integer> loadChildIDs() {		
+	private List<Integer> loadRoundIDs() {		
 		List<Integer> lst = Collections.emptyList();
-		/*
+
 		try {			
-			String request = kdb.makeSQLString(sql, pattern, parentID.toString());
-			Preconditions.checkNotNull(request, "BasicModel.loadChildIDs() : makeSQLString return null");
+			Preconditions.checkNotNull(sqlLoadRoundIDs, "RoundModel.loadRoundIDs() : sqlLoadRoundIDs is null");
 			
-			TableKeeper tk = kdb.selectRows(request);
+			TableKeeper tk = kdb.selectRows(sqlLoadRoundIDs);
 			if(tk == null)
 				return lst;
 			
 			Preconditions.checkState(tk.getColumnCount() == 1, 
-					"BasicModel.loadChildIDs() : selectRows() return incorrect column count (" + tk.getColumnCount() + ")");
+					"RoundModel.loadRoundIDs() : selectRows() return incorrect column count (" + tk.getColumnCount() + ")");
 						
 			if(tk.getRowCount() > 0) {
 				lst = new ArrayList<>();
-				for(int i = 1; i <= tk.getRowCount(); i++) { 
-					@SuppressWarnings("unchecked")
-					T val = (T)tk.getValue(i, 1);
-					lst.add(val);			
+				for(int i = 1; i <= tk.getRowCount(); i++) {					
+					lst.add((Integer) tk.getValue(i, 1));			
 				}
 			}
 		} catch(Exception e) {
@@ -98,8 +77,6 @@ public class RoundModel implements ComboBoxModel<RoundNode> {
 			lst = Collections.emptyList();
 		}		
 		return lst;
-		*/
-		return null;
 	}	
 
 }

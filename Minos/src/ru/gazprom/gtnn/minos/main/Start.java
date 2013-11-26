@@ -3,6 +3,7 @@ package ru.gazprom.gtnn.minos.main;
 
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
+import java.awt.FlowLayout;
 import java.awt.event.KeyEvent;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.Map;
 
 import javax.swing.ActionMap;
 import javax.swing.DropMode;
+import javax.swing.ImageIcon;
 import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -33,10 +35,12 @@ import javax.swing.tree.TreeCellRenderer;
 
 import com.google.common.cache.*;
 
+import ru.gazprom.gtnn.minos.annotations.TableColumn;
 import ru.gazprom.gtnn.minos.entity.*;
 import ru.gazprom.gtnn.minos.handlers.AddCatalogListener;
 import ru.gazprom.gtnn.minos.handlers.AddCompetenceListener;
 import ru.gazprom.gtnn.minos.handlers.AddIndicatorListener;
+import ru.gazprom.gtnn.minos.handlers.AddRoundListener;
 import ru.gazprom.gtnn.minos.handlers.EditProfileAndPositionAction;
 import ru.gazprom.gtnn.minos.handlers.LoadCompetenceCatalogListener;
 import ru.gazprom.gtnn.minos.handlers.LoadCompetenceFileListener;
@@ -152,11 +156,32 @@ public class Start {
 				map.put("profileCreate", "date_create");
 				map.put("profileRemove", "date_remove");
 				map.put("profileHost", "host");
-								
+
+				map.put("StringAttrTable", "MinosStringAttr");
+				map.put("stringAttrID", "id");
+				map.put("stringAttrItem", "item");
+				map.put("stringAttrValue", "value");
+				map.put("stringAttrDescr", "descr");
+				map.put("stringAttrVariety", "variety");
+				map.put("stringAttrHost", "host");
+				map.put("stringAttrExternalID1", "external_id1");
+				map.put("stringAttrExternalID2", "external_id2");
+				map.put("stringAttrExternalID3", "external_id3");
+				map.put("stringAttrCreate", "date_create");
+				map.put("stringAttrRemove", "date_remove");
+				
+				map.put("RoundTable", "MinosRound");
+				map.put("roundID", "id");
+				map.put("roundName", "name");
+				map.put("roundDescr", "descr");
+				map.put("roundHost", "host");
+				map.put("roundCreate", "date_create");
+				map.put("roundRemove", "date_remove");
+				map.put("roundStart", "round_start");
+				map.put("roundStop", "round_stop");
+
 				BasicNode.names = map;
-			
-				
-				
+
 				String connectionUrl = "jdbc:sqlserver://192.168.56.2:1433;databaseName=serg;user=sa;password=Q11W22e33;";
 				DatabaseConnectionKeeper kdb = new DatabaseConnectionKeeper(connectionUrl, null, null);
 
@@ -226,6 +251,20 @@ public class Start {
 										"and p.id in (%id%)",
 								"%id%", map));
 				
+				LoadingCache<Integer, StringAttrNode> cacheStringAttr = CacheBuilder.
+						newBuilder().
+						build(new MinosCacheLoader<Integer, StringAttrNode>(StringAttrNode.class, kdbM,
+								"select id, item, value, descr, variety, external_id1, external_id2, external_id3, date_create, date_remove, host from MinosStringAttr where id in (%id%)",
+								"%id%", map));
+
+				LoadingCache<Integer, StringAttrNode> cacheRound = CacheBuilder.
+						newBuilder().
+						build(new MinosCacheLoader<Integer, StringAttrNode>(StringAttrNode.class, kdbM,
+								"select id, name, descr, date_create, date_remove, host, round_start, round_stop from MinosRound where id in (%id%)",
+								"%id%", map));
+				
+				
+				
 				
 				BasicModel divisionModel = new DivisionModel(kdb, cacheDivision, 
 						"select tOrgStruID from tOrgStru where Parent = 0", 
@@ -249,7 +288,10 @@ public class Start {
 				BasicModel competenceAndCatalogModel = new CompetenceAndCatalogModel(kdbM, cacheCompetence, catalogModel, competenceModel,
 						"select id from MinosCompetence where catalog_id = %id%", "%id%", true);
 
-				BasicModel profileModel = new ProfileModel(kdbM, competenceModel, cacheCompetence);			
+				BasicModel profileModel = new ProfileModel(kdbM, competenceModel, 
+						cacheCompetence, cacheStringAttr,
+						"select id from MinosStringAttr where external_id1 = %id% and variety = 1",
+						"%id%");			
 						
 				
 				String[] arr = {"%id1%", "%id2%"};
@@ -298,6 +340,7 @@ public class Start {
 				
 				
 				
+				JFrame frm = new JFrame("test");
 				
 				JTree treeCompetence = new JTree(competenceModel);
 				treeCompetence.setName("Competence");
@@ -321,11 +364,13 @@ public class Start {
 				btnAddIndicator.addActionListener(new AddIndicatorListener(treeCompetenceAndCatalog));
 
 				JButton btnLoadCompetenceDir = new JButton("load competence dir");
-				btnLoadCompetenceDir.addActionListener(new LoadCompetenceCatalogListener(treeCompetenceAndCatalog));
+				btnLoadCompetenceDir.addActionListener(new LoadCompetenceCatalogListener(treeCompetenceAndCatalog, frm));
 
 				JButton btnLoadCompetenceFile = new JButton("load competence file");
 				btnLoadCompetenceFile.addActionListener(new LoadCompetenceFileListener(treeCompetenceAndCatalog));
 
+				JButton btnMakeLink = new JButton("->");
+				btnMakeLink.addActionListener(new MakeProfileAction(treeCompetenceAndCatalog, treeProfileAndPositionInDivision));
 				
 				JToolBar tb = new JToolBar();
 				tb.add(btnAddCatalog);
@@ -334,6 +379,7 @@ public class Start {
 				tb.add(btnAddIndicator);
 				tb.add(btnLoadCompetenceDir);
 				tb.add(btnLoadCompetenceFile);
+				tb.add(btnMakeLink);
 				
 				JPanel competenceAndCatalogPanel = new JPanel(new BorderLayout());
 				competenceAndCatalogPanel.add(new JScrollPane(treeCompetenceAndCatalog), BorderLayout.CENTER);
@@ -354,10 +400,14 @@ public class Start {
 				JPanel roundRating = new JPanel();
 				roundRating.setLayout(new BorderLayout());
 				
-				JToolBar tb2 = new JToolBar();
-				tb2.add(new JButton("Add Round"));
-				tb2.add(new JComboBox<String>());
 				
+				JButton btnAddRound = new JButton("+");
+				btnAddRound.addActionListener(new AddRoundListener(kdbM));
+				JToolBar tb2 = new JToolBar();
+				tb2.add(btnAddRound); //new JButton(new ImageIcon("C:\\tmp\\icon\\add.png")) );
+				JComboBox<String> cmb = new JComboBox<String>(); 
+				tb2.add(cmb);
+	
 				roundRating.add(tb2, BorderLayout.NORTH);
 				roundRating.add(new JLabel("Раунд оценки: ???, название: ???,  приказ: ???, дата начала: ???, дата конца: ???"), BorderLayout.SOUTH);
 				
@@ -373,7 +423,7 @@ public class Start {
 				tabbedPane.addTab("эксперт - испытуемый", split4);
 				//tabbedPane.addTab("check", new JScrollPane(new JTree(tcpd)));
 				
-				JFrame frm = new JFrame("test");
+				
 				frm.add(tabbedPane);
 
 				frm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -384,19 +434,6 @@ public class Start {
 		});
 		
 	}
-	
-
-
-	
-
-	
-	
-
-	
-
-	
-	
-
 	
 	public static void setLaF(String name) {
 		LookAndFeelInfo[] lfis = UIManager.getInstalledLookAndFeels();

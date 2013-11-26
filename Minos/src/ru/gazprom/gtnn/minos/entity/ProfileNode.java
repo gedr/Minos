@@ -38,6 +38,8 @@ public class ProfileNode extends BasicNode<Integer>{
 	public int profileCompetenceID;
 	@TableColumn
 	public int profileCompetenceIncarnatio;
+	
+	public List<Integer> lstStringAttr;
 
 	public static final int PROFILE_NAME = 1;
 	public static final int PROFILE_ITEM = 2;
@@ -56,7 +58,7 @@ public class ProfileNode extends BasicNode<Integer>{
 	
 	public void insert(DatabaseConnectionKeeper kdb, int flags) throws Exception{
 		List<RecordFeld> lst = makeListParam(flags);
-		Preconditions.checkNotNull(lst, "ProfileNode.insert() : insert() return null");
+		Preconditions.checkNotNull(lst, "ProfileNode.insert() : makeListParam() return null");
 		
 		try {
 			profileID = kdb.insertRow(true, names.get("ProfileTable"), lst);			
@@ -93,8 +95,8 @@ public class ProfileNode extends BasicNode<Integer>{
 		
 		List<RecordFeld> lst = new ArrayList<>();
 
-		if(((flags & PROFILE_NAME) != 0) && (names.get("profileID") != null) )
-			lst.add(new RecordFeld(java.sql.Types.VARCHAR, names.get("profileID"), profileID));
+		if(((flags & PROFILE_NAME) != 0) && (names.get("profileName") != null) )
+			lst.add(new RecordFeld(java.sql.Types.VARCHAR, names.get("profileName"), profileName));
 		if(((flags & PROFILE_HOST) != 0) && (names.get("profileHost") != null) )
 			lst.add(new RecordFeld(java.sql.Types.VARCHAR, names.get("profileHost"), profileHost));
 

@@ -8,25 +8,27 @@ import javax.swing.tree.TreePath;
 import ru.gazprom.gtnn.minos.entity.CompetenceNode;
 import ru.gazprom.gtnn.minos.entity.IndicatorNode;
 import ru.gazprom.gtnn.minos.entity.ProfileNode;
-
+import ru.gazprom.gtnn.minos.entity.StringAttrNode;
 import ru.gazprom.gtnn.minos.util.DatabaseConnectionKeeper;
 import ru.gedr.util.tuple.Pair;
 
+import com.google.common.base.Preconditions;
 import com.google.common.cache.LoadingCache;
 
 public class ProfileModel extends BasicModel {
 	  
-	private TreeModel competence;
-	private LoadingCache<Integer, CompetenceNode> cacheCompetence;
-	
-	
 	public ProfileModel(DatabaseConnectionKeeper kdb,
 			TreeModel competence,
-			LoadingCache<Integer, CompetenceNode> cacheCompetence) {			
+			LoadingCache<Integer, CompetenceNode> cacheCompetence,
+			LoadingCache<Integer, StringAttrNode> cacheStringAttr,
+			String sqlLoadStringAttrIDs, String pattern) {			
 			
 		super(kdb);		
 		this.competence = competence;
 		this.cacheCompetence = cacheCompetence;
+		this.cacheStringAttr = cacheStringAttr;	
+		this.sqlLoadStringAttrIDs = sqlLoadStringAttrIDs;
+		this.pattern = pattern;
 	}
 	
 	@Override
@@ -69,7 +71,6 @@ public class ProfileModel extends BasicModel {
 	public int getChildCount(Object arg) {
 		if(arg == null) 
 			return 0;
-
 		
 		if(arg instanceof ProfileNode) {
 			ProfileNode node = (ProfileNode)arg;
@@ -85,7 +86,6 @@ public class ProfileModel extends BasicModel {
 
 			return competence.getChildCount(nodeCompetence);
 		}
-
 		
 		if( (arg instanceof Pair<?, ?>) ||
 				(arg instanceof IndicatorNode) ) {
@@ -162,6 +162,55 @@ public class ProfileModel extends BasicModel {
 	public void reload() {		
 		// TODO
 	}
+	
+	public int getStringAttrCount(ProfileNode node) {
+		checkAndLoadStringAtrs(node);		
+		return node.lstStringAttr.size();
+	}
+	
+	public void reloadStringAttrs(ProfileNode node) {
+		if( (node.lstStringAttr != null) && (node.lstStringAttr.size() != 0) )
+			node.lstStringAttr.clear();
+		node.lstStringAttr = null;
+		checkAndLoadStringAtrs(node);
+	}
+	
+	public StringAttrNode getStringAttr(ProfileNode node, int index) {
+		if( (node.lstStringAttr == null) || (node.lstStringAttr.size() == 0) ) {
+			node.lstStringAttr = null;
+			checkAndLoadStringAtrs(node);
+		}
+		
+		Preconditions.checkArgument( (0 <= index) && (index < node.lstStringAttr.size()) , "ProfileModel.getStringAttr() : index out of bound");
+		StringAttrNode obj = null;
+		try {
+			obj = cacheStringAttr.get(node.lstStringAttr.get(index));
+		} catch (ExecutionException e) {
+			e.printStackTrace();
+			obj = null;
+		}
+		return obj;		
+	}
+	
+	private void checkAndLoadStringAtrs(ProfileNode node) {
+		if (node == null)
+			return;
+		if(node.lstStringAttr == null)  {
+			loadStringAtrs(node, true);
+		}
+	}
+	
+	private void loadStringAtrs(ProfileNode node, boolean flagPreload) {
+		if (node == null)
+			return;
+		node.lstStringAttr = loadChildIDs(sqlLoadStringAttrIDs, pattern, node.profileID);
+		if( flagPreload && (node.lstStringAttr.size() != 0) )
+			try {
+				cacheStringAttr.getAll(node.lstStringAttr);
+			} catch (ExecutionException e) {					
+				e.printStackTrace(); 
+			}
+	}
 
 	private CompetenceNode getCompetenceByID(Integer id) {
 		CompetenceNode node = null;
@@ -173,4 +222,10 @@ public class ProfileModel extends BasicModel {
 		}
 		return node;
 	}
+	
+	private TreeModel competence;
+	private LoadingCache<Integer, CompetenceNode> cacheCompetence;
+	private LoadingCache<Integer, StringAttrNode> cacheStringAttr;
+	private String sqlLoadStringAttrIDs;
+	private String pattern;
 }

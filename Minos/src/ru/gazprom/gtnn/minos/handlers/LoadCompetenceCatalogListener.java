@@ -1,5 +1,6 @@
 package ru.gazprom.gtnn.minos.handlers;
 
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
@@ -14,17 +15,24 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.JTree;
+import javax.swing.JWindow;
 import javax.swing.tree.TreePath;
 
 import ru.gazprom.gtnn.minos.entity.CatalogNode;
 import ru.gazprom.gtnn.minos.entity.CompetenceNode;
 import ru.gazprom.gtnn.minos.entity.IndicatorNode;
 import ru.gazprom.gtnn.minos.entity.ProfileNode;
+import ru.gazprom.gtnn.minos.entity.StringAttrNode;
 import ru.gazprom.gtnn.minos.models.BasicModel;
 import ru.gazprom.gtnn.minos.models.CatalogModel;
 import ru.gazprom.gtnn.minos.models.CompetenceAndCatalogModel;
@@ -37,12 +45,17 @@ public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 	private String 		fileName;
 	private CatalogNode parentCatalog;
 	private JTree 		tree;
+	private JFrame parentFrame;
+	private JWindow wnd;
 	
 	
 
-	public LoadCompetenceCatalogListener(JTree tree) {		
+	public LoadCompetenceCatalogListener(JTree tree, JFrame parentFrame) {		
 		this.tree = tree;		
-		
+		this.parentFrame = parentFrame;
+		this.wnd = new JWindow(parentFrame);
+		wnd.getContentPane().add(new JLabel("Waiting..."));
+		wnd.setSize(200, 50);
 	}
 
 	@Override
@@ -72,14 +85,26 @@ public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 				fileField,
 		};
 		
+		wnd.setVisible(true);
 		if( (JOptionPane.OK_OPTION == JOptionPane.showOptionDialog(null, inputs, "Competence dialog", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null)) &&
 				(!pathField.getText().isEmpty()) && (!fileField.getText().isEmpty()) ) {
 
 			startDir = pathField.getText();
 			fileName = fileField.getText();
+			
 			Thread thread = new Thread(this);
 			thread.start();
+
+			try {
+				thread.join();
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
+			
+			System.out.println("exit");
 		}
+		wnd.setVisible(false);
+		
 			
 	}
 
@@ -93,7 +118,8 @@ public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 			catalogLoader(parentCatalog, node, 0);
 		} catch (Exception e) {
 			e.printStackTrace();
-		}			
+		}
+		System.out.println("stop");
 	}	
 	
 	private Node readDir(Path startPath) {
@@ -155,7 +181,11 @@ public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 		    int step = 0;	
 		    int itemIndicator = 1;
 		    int itemCompetence = 1;
-		    ProfileNode profileNode = null;
+		    int itemStringAttr = 1;
+		    
+		    boolean flagUseProfile = false;
+		    ProfileNode profileNode = new ProfileNode();
+		    StringAttrNode stringAttrNode = new StringAttrNode();
 		    
 		    java.util.Date currentDate = new java.util.Date(System.currentTimeMillis()); 
 
@@ -175,33 +205,37 @@ public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 		    	if( line.contains("#") ) { //read division  id and position id
 		    		String str = line.substring(line.indexOf("#") + 1, line.length());
 		    		int indexColon = str.indexOf(":");
-		    		profileNode = new ProfileNode();
+		    		flagUseProfile = true;		    		
 		    		profileNode.profileDivisionID = Integer.valueOf(str.substring(0,  indexColon));
 		    		profileNode.profilePositionID = Integer.valueOf(str.substring(indexColon + 1,  str.length()));
-		    		
+		    		continue;
 		    	}
+
 		    	if ( line.contains("$") ) {
 		    			step = 1;
 		    			itemIndicator = 1;
+		    			itemStringAttr = 1;
 		    			itemCompetence++;
 		    			continue;
 		    	}
+		    	
 		    	if(line.isEmpty()) { 
 		    		step++;
 		    		itemIndicator = 1;
 		    		continue;
 		    	}
+		    	
 		    	switch(step) {
 		    	case 1:
-		    		nodeCompetence.competenceName = line;
-		    		nodeCompetence.competenceItem = itemCompetence;
+		    		nodeCompetence.competenceName = line;		    		
 		    		break;
 		    	case 2:
 		    		nodeCompetence.competenceDescr = line;
+		    		nodeCompetence.competenceItem = itemCompetence;
 		    		try {
 						BasicModel model = ((CompetenceAndCatalogModel)tree.getModel()).getCompetenceModel();
 						((CompetenceModel)model).add(nodeCompetence, catalog);
-						if(profileNode != null) {
+						if(flagUseProfile) {
 							profileNode.profileCompetenceIncarnatio = nodeCompetence.competenceIncarnatio;
 							profileNode.profileRemove = BasicModel.endTime;
 							profileNode.insert(((BasicModel)tree.getModel()).getDatabaseConnectionKeeper(), 
@@ -231,11 +265,32 @@ public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 						e.printStackTrace();
 					}
 		    		break;
+		    	case 8:
+		    		if(flagUseProfile) {
+		    			stringAttrNode.stringAttrVariety = StringAttrNode.VARIETY_PROFILE;
+		    			stringAttrNode.stringAttrRemove = BasicModel.endTime;
+		    			stringAttrNode.stringAttrExternalID1 = profileNode.profileID;
+		    			stringAttrNode.stringAttrValue = line;
+		    			stringAttrNode.stringAttrItem = itemStringAttr++;
+						try {
+			    			BasicModel model = ((CompetenceAndCatalogModel)tree.getModel()).getCompetenceModel();
+			    			stringAttrNode.insert(model.getDatabaseConnectionKeeper(), 
+			    					StringAttrNode.STRING_ATTR_ITEM | StringAttrNode.STRING_ATTR_EXTERNAL_ID1 |
+			    					StringAttrNode.STRING_ATTR_VALUE | StringAttrNode.STRING_ATTR_REMOVE |
+			    					StringAttrNode.STRING_ATTR_VARIETY);
+						} catch (Exception e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+		    		
+		    		}
+		    		break;
 		    	}			    	
 		    }
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
 	}
 
 
@@ -263,5 +318,4 @@ public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 		String catalogName;
 	}
 	
-	static final int STEP_COUNT = 7;
 }

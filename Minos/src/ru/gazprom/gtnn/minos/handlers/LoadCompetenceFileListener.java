@@ -88,18 +88,16 @@ public class LoadCompetenceFileListener implements ActionListener, Runnable{
 		    int itemCompetence = 1;
 		    ProfileNode profileNode = null;
 		    
-		    java.util.Date currentDate = new java.util.Date(System.currentTimeMillis()); 
+		    //java.util.Date currentDate = new java.util.Date(System.currentTimeMillis()); 
 
 		    // start initialization
 		    CompetenceNode nodeCompetence = new CompetenceNode();
 		    nodeCompetence.competenceIncarnatio = 0; //
 		    nodeCompetence.competenceCatalogID = catalog.catalogID;
 		    nodeCompetence.competenceChainNumber = 0;
-		    nodeCompetence.competenceCreate = currentDate;
 		    nodeCompetence.competenceRemove = BasicModel.endTime;
 		    
 		    IndicatorNode nodeIndicator = new IndicatorNode();
-		    nodeIndicator.indicatorCreate = currentDate;
 		    nodeIndicator.indicatorRemove = BasicModel.endTime;   
 		    
 		    while ((line = reader.readLine()) != null) {

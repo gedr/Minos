@@ -21,9 +21,10 @@ public class PersonNode extends BasicNode<Integer> {
 	@TableColumn
 	public Date personBirthDate;
 	
-	public PositionNode personPosition;
-	
-	
+	//public PositionNode personPosition;
+	public int personPositionID = 0;
+	public int personDivisionID = 0;
+		
 	@Override
 	public boolean equals(Object obj) {
 		if(obj == null) 
@@ -55,7 +56,9 @@ public class PersonNode extends BasicNode<Integer> {
 		append("[ sex :").append(personSex).append(" ] ").
 		append("[ birthDate :").append(personBirthDate).append(" ] ").
 		append("[ Age : ").append(currentDate.get(Calendar.YEAR) - cal1.get(Calendar.YEAR)).append(" ] ").
-		append("[ Position : ").append(personPosition == null ? " null" : personPosition.positionName).append(" ] ");		
+		append("PositionID : ").append(personPositionID).
+		append("DivisionID : ").append(personDivisionID);
+	//	append("[ Position : ").append(personPosition == null ? " null" : personPosition.positionName).append(" ] ");		
 		
 		return sb.toString();
 	}

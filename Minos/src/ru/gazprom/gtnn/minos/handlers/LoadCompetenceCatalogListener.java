@@ -1,10 +1,13 @@
 package ru.gazprom.gtnn.minos.handlers;
 
 import java.awt.BorderLayout;
+import java.awt.EventQueue;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.nio.file.DirectoryIteratorException;
 import java.nio.file.DirectoryStream;
@@ -14,6 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -26,11 +30,13 @@ import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.JTree;
 import javax.swing.JWindow;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
 import ru.gazprom.gtnn.minos.entity.CatalogNode;
 import ru.gazprom.gtnn.minos.entity.CompetenceNode;
 import ru.gazprom.gtnn.minos.entity.IndicatorNode;
+import ru.gazprom.gtnn.minos.entity.LevelNode;
 import ru.gazprom.gtnn.minos.entity.ProfileNode;
 import ru.gazprom.gtnn.minos.entity.StringAttrNode;
 import ru.gazprom.gtnn.minos.models.BasicModel;
@@ -40,22 +46,21 @@ import ru.gazprom.gtnn.minos.models.CompetenceModel;
 
 import com.google.common.base.Preconditions;
 
+
 public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 	private String 		startDir;
 	private String 		fileName;
 	private CatalogNode parentCatalog;
 	private JTree 		tree;
-	private JFrame parentFrame;
-	private JWindow wnd;
+	private JFrame 		parentFrame;
+	private JLabel 		infoLabel;
+	private JPanel 		glass;
 	
-	
-
 	public LoadCompetenceCatalogListener(JTree tree, JFrame parentFrame) {		
 		this.tree = tree;		
 		this.parentFrame = parentFrame;
-		this.wnd = new JWindow(parentFrame);
-		wnd.getContentPane().add(new JLabel("Waiting..."));
-		wnd.setSize(200, 50);
+		infoLabel = new JLabel();
+		glass = (JPanel) parentFrame.getGlassPane();
 	}
 
 	@Override
@@ -84,42 +89,49 @@ public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 				new JLabel("Common file"),
 				fileField,
 		};
+
 		
-		wnd.setVisible(true);
-		if( (JOptionPane.OK_OPTION == JOptionPane.showOptionDialog(null, inputs, "Competence dialog", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null)) &&
-				(!pathField.getText().isEmpty()) && (!fileField.getText().isEmpty()) ) {
 
-			startDir = pathField.getText();
-			fileName = fileField.getText();
-			
-			Thread thread = new Thread(this);
-			thread.start();
 
-			try {
-				thread.join();
-			} catch (InterruptedException e1) {
-				e1.printStackTrace();
-			}
-			
-			System.out.println("exit");
+		glass.setVisible(true);
+	    glass.setLayout(new GridBagLayout());
+	    infoLabel.setText("<html><font size=5 color=red> <b>Waiting...</b>");	    
+	    glass.add(infoLabel);
+
+		int dlgResult = JOptionPane.showOptionDialog(null, inputs, "Competence dialog", 
+				JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, 
+				null, null, null);
+		if( !(dlgResult == JOptionPane.OK_OPTION) || (pathField.getText().isEmpty()) || (fileField.getText().isEmpty()) ) {
+			glass.setVisible(false);
+			return;
 		}
-		wnd.setVisible(false);
-		
-			
-	}
 
+		startDir = pathField.getText();
+		fileName = fileField.getText();
+
+	
+		Thread thread = new Thread(this);		
+		
+		try {
+			thread.start();
+			thread.join();
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
+		glass.setVisible(false);
+	}
+	
+	
 	@Override
-	public void run() {			
+	public void run() {
 		Node node = readDir(Paths.get(startDir));
 		if(node == null)
 			return;
-		printNode(node, 1);
 		try {
 			catalogLoader(parentCatalog, node, 0);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		System.out.println("stop");
 	}	
 	
 	private Node readDir(Path startPath) {
@@ -144,6 +156,7 @@ public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 		return node;
 	}
 	
+	
 	private void catalogLoader(CatalogNode dest, Node node, int level) throws Exception {
 		CatalogNode nodeCatalog;
 		if(level == 0) {
@@ -151,13 +164,11 @@ public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 		} else {
 			nodeCatalog = new CatalogNode();				
 			nodeCatalog.catalogName = node.catalogName;
-			//nodeCatalog.subCatalogs = Collections.emptyList();
-			nodeCatalog.catalogCreate = new java.sql.Date(System.currentTimeMillis());
 			nodeCatalog.catalogRemove = BasicModel.endTime;
 			BasicModel model = ((CompetenceAndCatalogModel)tree.getModel()).getCatalogModel();
 			((CatalogModel)model).add(nodeCatalog, dest, false, 
 					CatalogNode.CATALOG_NAME | CatalogNode.CATALOG_PARENT | CatalogNode.CATALOG_ITEM |
-					CatalogNode.CATALOG_CREATE | CatalogNode.CATALOG_REMOVE | CatalogNode.CATALOG_VARIETY);
+					CatalogNode.CATALOG_REMOVE | CatalogNode.CATALOG_VARIETY);
 		}
 
 		Preconditions.checkArgument(nodeCatalog.catalogID != -1, "catalogLoader() : cannot load  CatalogNode" + nodeCatalog);
@@ -183,26 +194,28 @@ public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 		    int itemCompetence = 1;
 		    int itemStringAttr = 1;
 		    
-		    boolean flagUseProfile = false;
-		    ProfileNode profileNode = new ProfileNode();
-		    StringAttrNode stringAttrNode = new StringAttrNode();
-		    
-		    java.util.Date currentDate = new java.util.Date(System.currentTimeMillis()); 
+		    List<ProfileNode> profileNodes = null;
+		    int profileNodeCount = 0;
 
 		    // start initialization
 		    CompetenceNode nodeCompetence = new CompetenceNode();
 		    nodeCompetence.competenceIncarnatio = 0; //
 		    nodeCompetence.competenceCatalogID = catalog.catalogID;
+		    nodeCompetence.competenceVariety = catalog.catalogVariety;
 		    nodeCompetence.competenceChainNumber = 0;
-		    nodeCompetence.competenceCreate = currentDate;
 		    nodeCompetence.competenceRemove = BasicModel.endTime;
 		    
 		    IndicatorNode nodeIndicator = new IndicatorNode();
-		    nodeIndicator.indicatorCreate = currentDate;
 		    nodeIndicator.indicatorRemove = BasicModel.endTime;   
+
+		    StringAttrNode stringAttrNode = new StringAttrNode();
+			stringAttrNode.stringAttrVariety = StringAttrNode.VARIETY_PROFILE;
+			stringAttrNode.stringAttrRemove = BasicModel.endTime;
+
 		    
 		    while ((line = reader.readLine()) != null) {
-		    	if( line.contains("#") ) { //read division  id and position id
+		    	/*
+		    	if( line.contains("#") && !line.contains("$")) { //read division  id and position id
 		    		String str = line.substring(line.indexOf("#") + 1, line.length());
 		    		int indexColon = str.indexOf(":");
 		    		flagUseProfile = true;		    		
@@ -210,12 +223,42 @@ public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 		    		profileNode.profilePositionID = Integer.valueOf(str.substring(indexColon + 1,  str.length()));
 		    		continue;
 		    	}
+		    	*/
 
 		    	if ( line.contains("$") ) {
 		    			step = 1;
 		    			itemIndicator = 1;
 		    			itemStringAttr = 1;
 		    			itemCompetence++;
+		    			profileNodeCount = 0;
+		    			
+		    			if(line.contains("$#")) {
+		    				int rsh = line.indexOf("#");
+		    				List<Cmd> cmds = parseCmdString(line.substring(rsh + 1));
+		    				
+		    				profileNodeCount = (cmds == null ? 0 : cmds.size() ); 
+		    				
+		    				if((cmds != null) && (cmds.size() > 0)) {
+		    					if(profileNodes == null) { 
+		    						profileNodes = new ArrayList<>();
+		    					}
+		    					if(profileNodes.size() < profileNodeCount) {
+		    						int dif = cmds.size() - profileNodes.size();
+		    						for(int i = 0; i < dif; i++)
+		    							profileNodes.add(new ProfileNode());
+		    					}
+		    					for(int i = 0; i < profileNodeCount; i++) {
+		    						profileNodes.get(i).profileID = -1;
+		    						profileNodes.get(i).profileVariety = ProfileNode.VARIETY__DIVISION_AND_POSITION;
+		    						profileNodes.get(i).profileDivisionID = cmds.get(i).divisionID;
+		    						profileNodes.get(i).profilePositionID = cmds.get(i).positionID;
+		    						profileNodes.get(i).profileRemove = BasicModel.endTime;
+		    						profileNodes.get(i).profileMinLevel = 
+		    								( ((1 <= cmds.get(i).minLevel) && (cmds.get(i).minLevel <= LevelNode.LEVEL_COUNT)) ? cmds.get(i).minLevel : 1);
+		    					}
+		    				}		    				
+		    				cmds.clear();
+		    			}
 		    			continue;
 		    	}
 		    	
@@ -234,17 +277,18 @@ public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 		    		nodeCompetence.competenceItem = itemCompetence;
 		    		try {
 						BasicModel model = ((CompetenceAndCatalogModel)tree.getModel()).getCompetenceModel();
-						((CompetenceModel)model).add(nodeCompetence, catalog);
-						if(flagUseProfile) {
-							profileNode.profileCompetenceIncarnatio = nodeCompetence.competenceIncarnatio;
-							profileNode.profileRemove = BasicModel.endTime;
-							profileNode.insert(((BasicModel)tree.getModel()).getDatabaseConnectionKeeper(), 
-									ProfileNode.PROFILE_DIVISION | ProfileNode.PROFILE_POSITION | 
-									ProfileNode.PROFILE_COMPETENCE_INCARNATIO | ProfileNode.PROFILE_REMOVE);
+						((CompetenceModel)model).add(nodeCompetence, catalog); // save to DB and TreeModel
+						if(profileNodeCount > 0) {
+	    					for(int i = 0; i < profileNodeCount; i++) {
+	    						profileNodes.get(i).profileCompetenceIncarnatio = nodeCompetence.competenceIncarnatio;
+	    						profileNodes.get(i).insert(((BasicModel)tree.getModel()).getDatabaseConnectionKeeper(), 
+										ProfileNode.PROFILE_DIVISION | ProfileNode.PROFILE_POSITION | 
+										ProfileNode.PROFILE_MIN_LEVEL | ProfileNode.PROFILE_VARIETY |
+										ProfileNode.PROFILE_COMPETENCE_INCARNATIO | ProfileNode.PROFILE_REMOVE);
+	    					}
 						}
 					} catch (Exception e) {
-						e.printStackTrace();
-						
+						e.printStackTrace();						
 					}
 		    		break;
 		    	case 3:
@@ -255,34 +299,31 @@ public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 		    		nodeIndicator.indicatorName = line;
 		    		nodeIndicator.indicatorItem = itemIndicator++;
 		    		nodeIndicator.indicatorLevelID = step - 2;
-		    		nodeIndicator.indicatorCompetenceIncarnatio = nodeCompetence.competenceIncarnatio;   		
-					
+		    		nodeIndicator.indicatorCompetenceIncarnatio = nodeCompetence.competenceIncarnatio; // save to DB and TreeModel   		
 					try {
 						BasicModel model = ((CompetenceAndCatalogModel)tree.getModel()).getCompetenceModel();
 						((CompetenceModel)model).add(nodeIndicator, nodeCompetence, false);
 					} catch (Exception e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 		    		break;
 		    	case 8:
-		    		if(flagUseProfile) {
-		    			stringAttrNode.stringAttrVariety = StringAttrNode.VARIETY_PROFILE;
-		    			stringAttrNode.stringAttrRemove = BasicModel.endTime;
-		    			stringAttrNode.stringAttrExternalID1 = profileNode.profileID;
-		    			stringAttrNode.stringAttrValue = line;
-		    			stringAttrNode.stringAttrItem = itemStringAttr++;
-						try {
-			    			BasicModel model = ((CompetenceAndCatalogModel)tree.getModel()).getCompetenceModel();
-			    			stringAttrNode.insert(model.getDatabaseConnectionKeeper(), 
-			    					StringAttrNode.STRING_ATTR_ITEM | StringAttrNode.STRING_ATTR_EXTERNAL_ID1 |
-			    					StringAttrNode.STRING_ATTR_VALUE | StringAttrNode.STRING_ATTR_REMOVE |
-			    					StringAttrNode.STRING_ATTR_VARIETY);
-						} catch (Exception e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-		    		
+		    		if(profileNodeCount > 0) {
+    					for(int i = 0; i < profileNodeCount; i++) {    						
+    						stringAttrNode.stringAttrExternalID1 = profileNodes.get(i).profileID;
+    						stringAttrNode.stringAttrValue = line;
+    						stringAttrNode.stringAttrItem = itemStringAttr++;
+    						try {
+    							BasicModel model = ((CompetenceAndCatalogModel)tree.getModel()).getCompetenceModel();
+    							stringAttrNode.insert(model.getDatabaseConnectionKeeper(), 
+    									StringAttrNode.STRING_ATTR_ITEM | StringAttrNode.STRING_ATTR_EXTERNAL_ID1 |
+    									StringAttrNode.STRING_ATTR_VALUE | StringAttrNode.STRING_ATTR_REMOVE |
+    									StringAttrNode.STRING_ATTR_VARIETY);
+    						} catch (Exception e) {
+    							// TODO Auto-generated catch block
+    							e.printStackTrace();
+    						}
+    					}		    		
 		    		}
 		    		break;
 		    	}			    	
@@ -292,7 +333,48 @@ public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 		}
 		
 	}
+	
+	private class Cmd {
+		public int divisionID;
+		public int positionID;
+		public int minLevel;		
+	}
 
+	private List<Cmd> parseCmdString(String str) {		
+		int step = 1;
+		List<Cmd> lst = null;
+		Cmd cmd = null;
+		StringTokenizer st = new StringTokenizer(str, ":");
+		
+		while (st.hasMoreTokens()){
+			switch(step) { 
+			case 1:
+				if(cmd == null)
+					cmd = new Cmd();
+				cmd.divisionID = Integer.valueOf(st.nextToken());
+				break;
+			case 2:
+				cmd.positionID = Integer.valueOf(st.nextToken());
+				break;
+			case 3:
+				cmd.minLevel = Integer.valueOf(st.nextToken());
+				break;
+			}
+			
+			step++;
+			
+			if(step == 4) {
+				step = 1;
+				if(lst == null) {
+					lst = new ArrayList<>();
+				}
+				lst.add(cmd);
+				cmd = null;					
+			}		   
+		}
+		
+		return lst;
+	}
 
 	private void printNode(Node node, int level) {
 		String s = "";

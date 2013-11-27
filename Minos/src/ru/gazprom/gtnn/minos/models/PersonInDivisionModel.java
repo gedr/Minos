@@ -10,7 +10,6 @@ import javax.swing.tree.TreePath;
 
 import ru.gazprom.gtnn.minos.entity.DivisionNode;
 import ru.gazprom.gtnn.minos.entity.PersonNode;
-import ru.gazprom.gtnn.minos.entity.PositionNode;
 import ru.gazprom.gtnn.minos.util.DatabaseConnectionKeeper;
 import ru.gedr.util.tuple.Pair;
 
@@ -20,14 +19,14 @@ public class PersonInDivisionModel extends BasicModel {
 
 	public PersonInDivisionModel(DatabaseConnectionKeeper kdb,
 			LoadingCache<Integer, PersonNode> cachePerson,
-			LoadingCache<Integer, PositionNode> cachePosition,
+			//LoadingCache<Integer, PositionNode> cachePosition,
 			TreeModel division,			
 			String sqlLoadPersonIDsForDivision,			
 			String pattern,
 			boolean flagPersonBeforeSubDivision ) {			
 		super(kdb);				
 		this.cachePerson = cachePerson;
-		this.cachePosition = cachePosition;
+		//this.cachePosition = cachePosition;
 		this.division = division;
 		this.sqlLoadPersonIDsForDivision= sqlLoadPersonIDsForDivision; 
 		this.pattern = pattern;
@@ -158,16 +157,16 @@ public class PersonInDivisionModel extends BasicModel {
 			personsInDivisions.put(dn.divisionID, lst);
 
 			// load person use one request
-			if(lst.size() != 0) {
-				List<Integer> personsIDs = new ArrayList<Integer>();
+			if(lst.size() != 0) {				
 				try {
+					List<Integer> personsIDs = new ArrayList<Integer>();
 					for (Object obj : lst) {
 						@SuppressWarnings("unchecked")
 						Pair<Integer, Integer> p = (Pair<Integer, Integer>) obj;
 						personsIDs.add(p.getFirst());
-						cachePerson.getAll(personsIDs);
-						personsIDs.clear();
 					}
+					cachePerson.getAll(personsIDs);
+					personsIDs.clear();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -178,8 +177,8 @@ public class PersonInDivisionModel extends BasicModel {
 				for (Object obj : lst) {
 					@SuppressWarnings("unchecked")
 					Pair<Integer, Integer> p = (Pair<Integer, Integer>) obj;
-					cachePerson.get(p.getFirst()).personPosition = cachePosition
-							.get(p.getSecond());
+					cachePerson.get(p.getFirst()).personPositionID = p.getSecond();
+					cachePerson.get(p.getFirst()).personDivisionID = dn.divisionID;							
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -189,7 +188,7 @@ public class PersonInDivisionModel extends BasicModel {
 	}
 
 	private LoadingCache<Integer, PersonNode> cachePerson;
-	private LoadingCache<Integer, PositionNode> cachePosition;
+	//private LoadingCache<Integer, PositionNode> cachePosition;
 
 	private TreeModel division;
 	private String sqlLoadPersonIDsForDivision;

@@ -11,6 +11,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.cache.LoadingCache;
 
 import ru.gazprom.gtnn.minos.entity.CatalogNode;
+import ru.gazprom.gtnn.minos.entity.IndicatorNode;
 import ru.gazprom.gtnn.minos.util.DatabaseConnectionKeeper;
 
 public class CatalogModel  extends BasicModel {
@@ -147,28 +148,9 @@ public class CatalogModel  extends BasicModel {
 							(CatalogNode)nodes[i - 1],
 							true,
 							CatalogNode.CATALOG_ITEM | CatalogNode.CATALOG_NAME | CatalogNode.CATALOG_PARENT | 
-							CatalogNode.CATALOG_CREATE | CatalogNode.CATALOG_REMOVE | CatalogNode.CATALOG_VARIETY);
-/*					
-					CatalogNode dest = (CatalogNode)nodes[i - 1];					
-					loadSubCatalogs(dest, false);					
-					int max = 1;
-					if(dest.subCatalogs.size() == 0) {
-						dest.subCatalogs = new ArrayList<>();
-					} else {						
-						for(int j = 0; j < dest.subCatalogs.size(); j++) {
-							int item = cacheCatalog.get(dest.subCatalogs.get(j)).catalogItem;
-							if( max <  item)
-								max = item;
-						}							
-					}
-		
-					CatalogNode source = (CatalogNode)obj;
-					source.catalogParent = dest.catalogID;
-					source.catalogItem = max + 1;
-					source.insert(kdb,  
-							CatalogNode.CATALOG_ITEM | CatalogNode.CATALOG_NAME | CatalogNode.CATALOG_PARENT | 
-							CatalogNode.CATALOG_CREATE | CatalogNode.CATALOG_REMOVE);
-*/
+							( ((CatalogNode)obj).catalogCreate == null ? 0 : CatalogNode.CATALOG_CREATE ) | 
+							( ((CatalogNode)obj).catalogRemove == null ? 0 : CatalogNode.CATALOG_REMOVE ) |
+							CatalogNode.CATALOG_VARIETY);
 					break;
 				}
 			}			

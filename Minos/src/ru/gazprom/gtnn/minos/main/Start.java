@@ -40,6 +40,7 @@ import ru.gazprom.gtnn.minos.entity.*;
 import ru.gazprom.gtnn.minos.handlers.AddCatalogListener;
 import ru.gazprom.gtnn.minos.handlers.AddCompetenceListener;
 import ru.gazprom.gtnn.minos.handlers.AddIndicatorListener;
+import ru.gazprom.gtnn.minos.handlers.AddMinos_SinnerListener;
 import ru.gazprom.gtnn.minos.handlers.AddRoundListener;
 import ru.gazprom.gtnn.minos.handlers.EditProfileAndPositionAction;
 import ru.gazprom.gtnn.minos.handlers.LoadCompetenceCatalogListener;
@@ -54,6 +55,7 @@ import ru.gazprom.gtnn.minos.models.MinosTreeRenderer;
 import ru.gazprom.gtnn.minos.models.MyTransferHandler;
 import ru.gazprom.gtnn.minos.models.PersonInDivisionModel;
 import ru.gazprom.gtnn.minos.models.PositionInDivisionModel;
+import ru.gazprom.gtnn.minos.models.ProfileAndPersonInDivision;
 import ru.gazprom.gtnn.minos.models.ProfileAndPositionInDivision;
 import ru.gazprom.gtnn.minos.models.ProfileModel;
 import ru.gazprom.gtnn.minos.models.RoundModel;
@@ -264,8 +266,7 @@ public class Start {
 								"select id, name, descr, date_create, date_remove, host, round_start, round_stop from MinosRound where id in (%id%)",
 								"%id%", map));
 
-				
-				
+
 				
 				
 				
@@ -277,8 +278,11 @@ public class Start {
 						"select distinct(tStatDolSpId) from tOrgAssignCur where tOrgStruId = %id%", 
 						"%id%", true);
 
-				BasicModel personInDivisionModel = new PersonInDivisionModel(kdb, cachePerson, cachePosition, divisionModel, 
-						"select tPersonaId, tStatDolSpId from tOrgAssignCur where tOrgStruId = %id%", 
+				BasicModel personInDivisionModel = new PersonInDivisionModel(kdb, cachePerson, 
+						//cachePosition, 
+						divisionModel, 
+						"select tPersonaId, tStatDolSpId from tOrgAssignCur where tOrgStruId = %id% "
+						+ " and (GETDATE() between BegDA and EndDA) and (State = 3)", 
 						"%id%", true);
 				
 				BasicModel catalogModel = new CatalogModel(kdbM, cacheCatalog, 
@@ -295,7 +299,7 @@ public class Start {
 						cacheCompetence, cacheStringAttr,
 						"select id from MinosStringAttr where external_id1 = %id% and variety = 1",
 						"%id%");			
-						
+
 				
 				String[] arr = {"%id1%", "%id2%"};
 				BasicModel profileAndPositionInDivisionModel = new ProfileAndPositionInDivision(kdbM, cacheProfile, positionInDivisionModel, profileModel,
@@ -307,6 +311,17 @@ public class Start {
 						"and p.variety = 1 ",
 						arr);
 
+				BasicModel profileAndPersonInDivisionModel = new ProfileAndPersonInDivision(kdbM, 
+						cacheProfile, 
+						personInDivisionModel, 
+						profileModel,
+						"select p.id from MinosProfile p " +
+						"join MinosCompetence c on c.incarnatio = p.competence_incarnatio " +
+						"where GETDATE() between p.date_create and p.date_remove " +
+						"and GETDATE() between c.date_create and c.date_remove " +
+						"and division_id = %id1% and position_id = %id2% " + 
+						"and p.variety = 1 ",
+						arr);
 
 				TreeCellRenderer tcr = new MinosTreeRenderer(cacheCompetence, cacheLevel);
 				
@@ -331,7 +346,6 @@ public class Start {
 				treeProfileAndPositionInDivision.setDragEnabled(true);
 				treeProfileAndPositionInDivision.setTransferHandler(new MyTransferHandler("tpos"));
 				treeProfileAndPositionInDivision.setDropMode(DropMode.ON);
-				
 
 				String action = "changeWnd";
 				InputMap im =treeProfileAndPositionInDivision.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
@@ -392,16 +406,22 @@ public class Start {
 						new JScrollPane(treeProfileAndPositionInDivision));
 
 				JSplitPane split2 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
-						new JScrollPane(new JTree(profileAndPositionInDivisionModel)), new JScrollPane(treePersonInDivision)); //tmpos
+						new JScrollPane(new JTree(profileAndPositionInDivisionModel)), 
+						new JScrollPane(new JTree(profileAndPersonInDivisionModel))); //treePersonInDivision)); 
 				
 				
 				
 				
 				JPanel panelMinos_Sinner = new JPanel(new BorderLayout());
-				JSplitPane splitPane3 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, new JScrollPane(new JTree(personInDivisionModel)),new JScrollPane(new JTree(personInDivisionModel)));
+				JSplitPane splitPane3 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
+						new JScrollPane(new JTree(personInDivisionModel)),
+						new JScrollPane(new JTree(profileAndPersonInDivisionModel)));
 				splitPane3.setDividerLocation(0.5);
 				panelMinos_Sinner.add(splitPane3, BorderLayout.CENTER);
-				panelMinos_Sinner.add(new JButton("add"), BorderLayout.SOUTH);
+				
+				JButton btnAddMinos_Sinner = new JButton("add");
+				btnAddMinos_Sinner.addActionListener(new AddMinos_SinnerListener());
+				panelMinos_Sinner.add(btnAddMinos_Sinner, BorderLayout.SOUTH);
 				
 				
 				JPanel roundRating = new JPanel();

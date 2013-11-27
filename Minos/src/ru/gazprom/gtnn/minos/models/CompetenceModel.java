@@ -206,7 +206,8 @@ public class CompetenceModel extends BasicModel {
 					CompetenceNode.COMPETENCE_ITEM | CompetenceNode.COMPETENCE_CATALOG | 
 					CompetenceNode.COMPETENCE_INCARNATIO | CompetenceNode.COMPETENCE_CHAIN_NUMBER |
 					CompetenceNode.COMPETENCE_VARIETY |
-					CompetenceNode.COMPETENCE_REMOVE | CompetenceNode.COMPETENCE_CREATE, 
+					(source.competenceCreate == null  ? 0 : CompetenceNode.COMPETENCE_CREATE) |
+					(source.competenceRemove == null  ? 0 : CompetenceNode.COMPETENCE_REMOVE) , 
 					true);
 			  
 		} catch (Exception e) {
@@ -241,7 +242,8 @@ public class CompetenceModel extends BasicModel {
 					IndicatorNode.INDICATOR_NAME | IndicatorNode.INDICATOR_ITEM |
 					IndicatorNode.INDICATOR_LEVEL | IndicatorNode.INDICATOR_COMPETENCE |
 					IndicatorNode.INDICATOR_CHILD |
-					IndicatorNode.INDICATOR_CREATE | IndicatorNode.INDICATOR_REMOVE);
+					(source.indicatorCreate == null ? 0 : IndicatorNode.INDICATOR_CREATE) |
+					(source.indicatorRemove == null ? 0 : IndicatorNode.INDICATOR_REMOVE) );
 			if (fEmpty) {
 				dest.indicators = new ArrayList<>();
 			}

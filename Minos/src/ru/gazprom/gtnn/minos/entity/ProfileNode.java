@@ -41,6 +41,8 @@ public class ProfileNode extends BasicNode<Integer>{
 	
 	public List<Integer> lstStringAttr;
 
+	public static final int VARIETY__DIVISION_AND_POSITION = 1; 
+	
 	public static final int PROFILE_NAME = 1;
 	public static final int PROFILE_ITEM = 2;
 	public static final int PROFILE_HOST = 4;

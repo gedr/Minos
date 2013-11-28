@@ -1,10 +1,13 @@
 package ru.gazprom.gtnn.minos.handlers;
 
-import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
 import java.awt.EventQueue;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.MouseAdapter;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -19,9 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
-import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -29,8 +30,6 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.JTree;
-import javax.swing.JWindow;
-import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
 import ru.gazprom.gtnn.minos.entity.CatalogNode;
@@ -46,6 +45,96 @@ import ru.gazprom.gtnn.minos.models.CompetenceModel;
 
 import com.google.common.base.Preconditions;
 
+class DisplayInfo implements Runnable {
+	private int cmd = 0;
+	private String str;
+	private int 	value;
+	private JPanel pan;
+	private Component oldGlassPane;
+	private JFrame parentFrame;
+	private JLabel info;
+	private JProgressBar progress;
+	
+	public DisplayInfo(JFrame parentFrame) {
+		this.parentFrame = parentFrame;
+		info = new JLabel();
+		progress = new JProgressBar();
+		
+		pan = new JPanel();
+		pan.setLayout(new GridBagLayout());
+		pan.setOpaque(false);
+		GridBagConstraints constr = new GridBagConstraints();
+		constr.fill = GridBagConstraints.HORIZONTAL;
+		constr.gridx = 0;
+		constr.gridy = 0;
+		pan.add(info, constr);
+
+		constr.gridy = 1;
+		pan.add(progress, constr);
+		pan.addMouseListener(new MouseAdapter() { });
+		pan.addKeyListener(new KeyAdapter() { });		
+	}
+
+	@Override
+	public void run() {
+		switch(cmd) {
+		case 1:
+			oldGlassPane = parentFrame.getGlassPane();
+			parentFrame.setGlassPane(pan);
+			pan.setVisible(true);
+			break;
+		case 2:
+			if(oldGlassPane != null)
+				parentFrame.setGlassPane(oldGlassPane);
+			pan.setVisible(false);
+			break;			
+		case 3:
+			info.setText(str);
+			progress.setValue(value);
+			break;
+		}		
+		
+	}
+
+	public void show() {
+		cmd = 1;
+		try {
+			EventQueue.invokeAndWait(this);
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+	}		
+	
+	public void hide() {
+		cmd = 2;
+		try {
+			EventQueue.invokeAndWait(this);
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+	}
+	
+	public void setText(String txt) {
+		cmd = 3;
+		str = txt;
+		EventQueue.invokeLater(this);
+	}
+	
+	public void setMaxValue(int max) {
+		progress.setMaximum(max);
+	}
+	
+	public void setCurrentValue(int value) {
+		cmd = 3;
+		this.value = value;
+		EventQueue.invokeLater(this);
+	}
+
+	public int getCurrentValue() {
+		return progress.getValue();
+	}
+}
+
 
 public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 	private String 		startDir;
@@ -53,14 +142,13 @@ public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 	private CatalogNode parentCatalog;
 	private JTree 		tree;
 	private JFrame 		parentFrame;
-	private JLabel 		infoLabel;
-	private JPanel 		glass;
+	private DisplayInfo displayInfo;
+
 	
 	public LoadCompetenceCatalogListener(JTree tree, JFrame parentFrame) {		
 		this.tree = tree;		
 		this.parentFrame = parentFrame;
-		infoLabel = new JLabel();
-		glass = (JPanel) parentFrame.getGlassPane();
+		
 	}
 
 	@Override
@@ -90,48 +178,39 @@ public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 				fileField,
 		};
 
-		
-
-
-		glass.setVisible(true);
-	    glass.setLayout(new GridBagLayout());
-	    infoLabel.setText("<html><font size=5 color=red> <b>Waiting...</b>");	    
-	    glass.add(infoLabel);
-
 		int dlgResult = JOptionPane.showOptionDialog(null, inputs, "Competence dialog", 
 				JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, 
 				null, null, null);
 		if( !(dlgResult == JOptionPane.OK_OPTION) || (pathField.getText().isEmpty()) || (fileField.getText().isEmpty()) ) {
-			glass.setVisible(false);
 			return;
 		}
 
 		startDir = pathField.getText();
 		fileName = fileField.getText();
 
-	
 		Thread thread = new Thread(this);		
-		
-		try {
-			thread.start();
-			thread.join();
-		} catch (InterruptedException e1) {
-			e1.printStackTrace();
-		}
-		glass.setVisible(false);
+		thread.start();
 	}
+	
+
 	
 	
 	@Override
 	public void run() {
+		displayInfo = new DisplayInfo(parentFrame);
+		displayInfo.show();
+		displayInfo.setText("Загрузка структуры каталогов");
 		Node node = readDir(Paths.get(startDir));
 		if(node == null)
 			return;
+		int countDir = calculateNode(node);
+		displayInfo.setMaxValue(countDir);
 		try {
 			catalogLoader(parentCatalog, node, 0);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		displayInfo.hide();
 	}	
 	
 	private Node readDir(Path startPath) {
@@ -170,11 +249,14 @@ public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 					CatalogNode.CATALOG_NAME | CatalogNode.CATALOG_PARENT | CatalogNode.CATALOG_ITEM |
 					CatalogNode.CATALOG_REMOVE | CatalogNode.CATALOG_VARIETY);
 		}
+		
+		displayInfo.setText("<html><font size=5 color=red> <b>загружается каталог : " + node.catalogName + "</b>");
+		displayInfo.setCurrentValue(displayInfo.getCurrentValue() + 1);
 
 		Preconditions.checkArgument(nodeCatalog.catalogID != -1, "catalogLoader() : cannot load  CatalogNode" + nodeCatalog);
 		
 		fileLoader(node.filePath, nodeCatalog);
-		
+
 		if(node.child != null) {				
 			for(Node n : node.child) 
 				catalogLoader(nodeCatalog, n, level + 1);
@@ -376,21 +458,17 @@ public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 		return lst;
 	}
 
-	private void printNode(Node node, int level) {
-		String s = "";
-		for(int i = 0; i < level * 3; i++)
-			s += " ";
-		System.out.println(s + "<dir> " + node.catalogName);
-		if(node.filePath != null ) {
-			System.out.println(s + " <file> " + node.filePath);
-		}
+	private int calculateNode(Node node) {
+		if(node == null)
+			return 0;
 		
-		if(node.child == null) 
-			return;
+		int sum = 1;
+		if(node.child != null)
+			for(Node n : node.child) {
+				sum += calculateNode(n);
+			}	
 		
-		for(Node n : node.child) {
-			printNode(n, level + 1);
-		}	
+		return sum;
 	}
 
 	
@@ -398,6 +476,5 @@ public class LoadCompetenceCatalogListener implements ActionListener, Runnable {
 		public List<Node> child;		
 		Path filePath;
 		String catalogName;
-	}
-	
+	}	
 }

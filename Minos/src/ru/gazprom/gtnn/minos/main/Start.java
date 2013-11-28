@@ -420,7 +420,7 @@ public class Start {
 				panelMinos_Sinner.add(splitPane3, BorderLayout.CENTER);
 				
 				JButton btnAddMinos_Sinner = new JButton("add");
-				btnAddMinos_Sinner.addActionListener(new AddMinos_SinnerListener());
+				//btnAddMinos_Sinner.addActionListener(new AddMinos_SinnerListener());
 				panelMinos_Sinner.add(btnAddMinos_Sinner, BorderLayout.SOUTH);
 				
 				

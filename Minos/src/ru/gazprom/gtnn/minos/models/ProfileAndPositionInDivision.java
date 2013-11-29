@@ -103,7 +103,7 @@ public class ProfileAndPositionInDivision extends BasicModel {
 
 	@Override
 	public Object getChild(Object parent, int index) {
-		System.out.println("getChild" + parent);
+		//System.out.println("getChild" + parent);
 		if(parent == null)
 			return null;
 
@@ -141,7 +141,7 @@ public class ProfileAndPositionInDivision extends BasicModel {
 
 	@Override
 	public int getIndexOfChild(Object parent, Object child) {
-		System.out.println("getIndexOfChild" + parent);
+		//System.out.println("getIndexOfChild" + parent);
 		if(parent == null || child == null)
 			return -1;
 

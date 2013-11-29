@@ -87,7 +87,7 @@ public class ProfileAndPersonInDivision extends BasicModel {
 
 	@Override
 	public Object getChild(Object parent, int index) {
-		System.out.println("getChild" + parent);
+		//System.out.println("getChild" + parent);
 		if(parent == null)
 			return null;
 

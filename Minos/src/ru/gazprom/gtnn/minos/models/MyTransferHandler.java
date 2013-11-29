@@ -30,7 +30,7 @@ public class MyTransferHandler extends TransferHandler {
 	
 	@Override
 	public int getSourceActions(JComponent c) {
-		System.out.println(str + "  : MyTransferHandler.getSourceActions  :  " + c.getName());
+		//System.out.println(str + "  : MyTransferHandler.getSourceActions  :  " + c.getName());
 		return TransferHandler.LINK;
 		// 		return super.getSourceActions(c);
 	}
@@ -38,14 +38,14 @@ public class MyTransferHandler extends TransferHandler {
 	@Override
 	public boolean canImport(JComponent arg0, DataFlavor[] arg1) {
 		// TODO Auto-generated method stub
-		System.out.println(str + "  : MyTransferHandler.canImport  " + arg0.getName());
+		//System.out.println(str + "  : MyTransferHandler.canImport  " + arg0.getName());
 		return super.canImport(arg0, arg1);
 	}
 
 	@Override
 	public boolean canImport(TransferSupport arg0) {
 		// TODO Auto-generated method stub
-		System.out.println(str + "  : MyTransferHandler.canImport");
+		//System.out.println(str + "  : MyTransferHandler.canImport");
 		return arg0.isDataFlavorSupported(DataFlavor.stringFlavor);
 		//return super.canImport(arg0);
 	}
@@ -53,7 +53,7 @@ public class MyTransferHandler extends TransferHandler {
 	@Override
 	protected Transferable createTransferable(JComponent arg0) {
 		// TODO Auto-generated method stub
-		System.out.println(str + "  : MyTransferHandler.createTransferable  " + arg0.getName());
+		//System.out.println(str + "  : MyTransferHandler.createTransferable  " + arg0.getName());
 		return new StringSelection("hello");
 		//return super.createTransferable(arg0);
 	}
@@ -61,7 +61,7 @@ public class MyTransferHandler extends TransferHandler {
 	@Override
 	public Image getDragImage() {
 		// TODO Auto-generated method stub
-		System.out.println(str + "  : MyTransferHandler.getDragImage");
+		//System.out.println(str + "  : MyTransferHandler.getDragImage");
 		return img == null ? super.getDragImage() : img;
 		//return super.getDragImage();
 	}
@@ -69,7 +69,7 @@ public class MyTransferHandler extends TransferHandler {
 	@Override
 	public boolean importData(JComponent arg0, Transferable arg1) {
 		// TODO Auto-generated method stub
-		System.out.println(str + "  : MyTransferHandler.importData   " + arg0.getName());
+		//System.out.println(str + "  : MyTransferHandler.importData   " + arg0.getName());
 		
 		return super.importData(arg0, arg1);
 	}
@@ -77,7 +77,7 @@ public class MyTransferHandler extends TransferHandler {
 	@Override
 	public boolean importData(TransferSupport arg0) {
 		// TODO Auto-generated method stub
-		System.out.println(str + "  : MyTransferHandler.importData");
+		//System.out.println(str + "  : MyTransferHandler.importData");
 
 		if(arg0.isDataFlavorSupported(DataFlavor.stringFlavor)) {
 			try {
@@ -97,9 +97,4 @@ public class MyTransferHandler extends TransferHandler {
 		//return super.importData(arg0);
 		return false;
 	}
-
-
-
-
 }
-

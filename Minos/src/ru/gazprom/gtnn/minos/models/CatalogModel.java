@@ -11,7 +11,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.cache.LoadingCache;
 
 import ru.gazprom.gtnn.minos.entity.CatalogNode;
-import ru.gazprom.gtnn.minos.entity.IndicatorNode;
 import ru.gazprom.gtnn.minos.util.DatabaseConnectionKeeper;
 
 public class CatalogModel  extends BasicModel {

@@ -60,7 +60,13 @@ public class EditProfileAndPositionAction extends AbstractAction {
 		
 		Object obj = tree.getSelectionPath().getLastPathComponent();
 		if(obj instanceof ProfileNode) {
-			ProfileNode node = (ProfileNode) obj; 
+			ProfileNode node = (ProfileNode) obj;
+			try {
+				cb.getModel().setSelectedItem(cacheLevel.get(node.profileMinLevel).levelName);
+			} catch (ExecutionException e1) {
+				e1.printStackTrace();
+				return;
+			}
 			inputs[0] = cb;
 			if( (JOptionPane.OK_OPTION == JOptionPane.showOptionDialog(null, inputs, "Chenge level dialog", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null)) ) {
 				System.out.println(cb.getSelectedIndex() );
@@ -72,8 +78,7 @@ public class EditProfileAndPositionAction extends AbstractAction {
 						e.printStackTrace();
 					}
 					tree.updateUI();
-				}
-				
+				}				
 			}	
 		}
 		
@@ -85,16 +90,10 @@ public class EditProfileAndPositionAction extends AbstractAction {
 					lst.add((ProfileNode)tree.getModel().getChild(obj, i));
 
 				inputs[0] = new JTable(childCount, 6);
-				//((JTable)inputs[0]).setm
-				
 				if( (JOptionPane.OK_OPTION == JOptionPane.showOptionDialog(null, inputs, "Chenge level dialog", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null)) ) {
 
 				}
-
-
-
 			}
-
 		}
 	}
 }

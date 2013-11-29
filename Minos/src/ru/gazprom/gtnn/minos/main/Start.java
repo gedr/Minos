@@ -382,7 +382,7 @@ public class Start {
 				btnLoadCompetenceDir.addActionListener(new LoadCompetenceCatalogListener(treeCompetenceAndCatalog, frm));
 
 				JButton btnLoadCompetenceFile = new JButton("load competence file");
-				btnLoadCompetenceFile.addActionListener(new LoadCompetenceFileListener(treeCompetenceAndCatalog));
+				btnLoadCompetenceFile.addActionListener(new LoadCompetenceFileListener(treeCompetenceAndCatalog, frm));
 
 				JButton btnMakeLink = new JButton("->");
 				btnMakeLink.addActionListener(new MakeProfileAction(treeCompetenceAndCatalog, treeProfileAndPositionInDivision));
@@ -412,15 +412,24 @@ public class Start {
 				
 				
 				
+				JLabel roundLabel = new JLabel();
+				
+				JComboBox<RoundNode> cmb = new JComboBox<>(); 
+				RoundModel roundModel = new RoundModel(kdbM, cacheRound, roundLabel, "select id from MinosRound");
+				cmb.setModel( roundModel );			
+				
+				
 				JPanel panelMinos_Sinner = new JPanel(new BorderLayout());
+				JTree treeMinoses = new JTree(personInDivisionModel);
+				JTree treeSinners = new JTree(profileAndPersonInDivisionModel);
 				JSplitPane splitPane3 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
-						new JScrollPane(new JTree(personInDivisionModel)),
-						new JScrollPane(new JTree(profileAndPersonInDivisionModel)));
+						new JScrollPane(treeMinoses),
+						new JScrollPane(treeSinners));
 				splitPane3.setDividerLocation(0.5);
 				panelMinos_Sinner.add(splitPane3, BorderLayout.CENTER);
 				
 				JButton btnAddMinos_Sinner = new JButton("add");
-				//btnAddMinos_Sinner.addActionListener(new AddMinos_SinnerListener());
+				btnAddMinos_Sinner.addActionListener(new AddMinos_SinnerListener(treeMinoses, treeSinners, roundModel, kdbM));
 				panelMinos_Sinner.add(btnAddMinos_Sinner, BorderLayout.SOUTH);
 				
 				
@@ -431,10 +440,6 @@ public class Start {
 				JButton btnAddRound = new JButton("+");
 				btnAddRound.addActionListener(new AddRoundListener(kdbM));
 				
-				JLabel roundLabel = new JLabel();
-				
-				JComboBox<RoundNode> cmb = new JComboBox<>(); 
-				cmb.setModel( new RoundModel(kdbM, cacheRound, roundLabel, "select id from MinosRound") );			
 				
 
 				JToolBar tb2 = new JToolBar();

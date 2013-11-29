@@ -160,7 +160,6 @@ public class CompetenceAndCatalogModel extends BasicModel {
 	
 	@Override
 	public void reload() {
-		System.out.println("CompetenceAndCatalog.reload()");		
 		catalog.reload();
 		competencesInCatalog.clear();
 		competence.reload();

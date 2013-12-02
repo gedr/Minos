@@ -116,24 +116,34 @@ CREATE TABLE MinosRound (
 
 ---------------------------------------------------------------------------------------
 
-CREATE TABLE MinosRoundPersons (
+CREATE TABLE MinosRoundActors (
 	id 						INTEGER IDENTITY(1,1) PRIMARY KEY,
 	minos_id				INTEGER NOT NULL,
 	sinner_id				INTEGER NOT NULL,
 	round_id				INTEGER NOT NULL,
-	item					INTEGER NOT NULL DEFAULT 1, -- позиция в списке	
 	date_create				DATETIME NOT NULL DEFAULT GETDATE(), --дата начала действия элемента
 	date_remove				DATETIME NOT NULL DEFAULT GETDATE(), -- окончание действия элемента	
-	host					VARCHAR(2048) NOT NULL DEFAULT SYSTEM_USER -- user who create element	
+	host					VARCHAR(2048) NOT NULL DEFAULT SYSTEM_USER, -- user who create element	
+	finishFlag				BIT NOT NULL DEFAULT 0
 );
 
 ---------------------------------------------------------------------------------------
 
-CREATE TABLE MinosRoundProfil (
-	roundPersons_id INTEGER NOT NULL,
-	profile_id 	INTEGER NOT NULL,
+CREATE TABLE MinosRoundProfile (
+	id 						INTEGER IDENTITY(1,1) PRIMARY KEY,
+	actors_id 		INTEGER NOT NULL,
+	profile_id 		INTEGER NOT NULL,
+	indicatorResultFlagsHi	BIGINT NOT NULL DEFAULT 0,
+	indicatorResultFlagsLo	BIGINT NOT NULL DEFAULT 0,
+	cost			FLOAT NOT NULL DEFAULT 0.0
 );
 
+---------------------------------------------------------------------------------------
+
+CREATE TABLE MinosPersonLogin (
+	person_id		INTEGER NOT NULL,
+	person_login		VARCHAR(2048) DEFAULT NULL
+);
 
 
 

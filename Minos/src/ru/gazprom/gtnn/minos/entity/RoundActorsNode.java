@@ -23,7 +23,7 @@ public class RoundActorsNode extends BasicNode<Integer> {
 	@TableColumn
 	public String roundActorsHost;
 	@TableColumn
-	public String roundActorsFinish;
+	public Boolean roundActorsFinish;
 	@TableColumn
 	public java.util.Date roundActorsCreate;
 	@TableColumn

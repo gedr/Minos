@@ -54,7 +54,7 @@ public class MinosTreeRenderer extends DefaultTreeCellRenderer {
 		
 		if(value instanceof CompetenceNode) {
 			cell.setIcon(competence);
-			cell.setText(((CompetenceNode)value).competenceName + ((CompetenceNode)value).competenceID);
+			cell.setText(((CompetenceNode)value).competenceName);
 			return cell;
 		}
 

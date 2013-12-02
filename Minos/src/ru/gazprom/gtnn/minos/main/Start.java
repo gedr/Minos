@@ -4,6 +4,8 @@ package ru.gazprom.gtnn.minos.main;
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -31,11 +33,13 @@ import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
+import javax.swing.table.TableModel;
 import javax.swing.tree.TreeCellRenderer;
 
 import com.google.common.cache.*;
 
 import ru.gazprom.gtnn.minos.annotations.TableColumn;
+import ru.gazprom.gtnn.minos.annotations.TableName;
 import ru.gazprom.gtnn.minos.entity.*;
 import ru.gazprom.gtnn.minos.handlers.AddCatalogListener;
 import ru.gazprom.gtnn.minos.handlers.AddCompetenceListener;
@@ -58,6 +62,7 @@ import ru.gazprom.gtnn.minos.models.PositionInDivisionModel;
 import ru.gazprom.gtnn.minos.models.ProfileAndPersonInDivision;
 import ru.gazprom.gtnn.minos.models.ProfileAndPositionInDivision;
 import ru.gazprom.gtnn.minos.models.ProfileModel;
+import ru.gazprom.gtnn.minos.models.RoundActorsTableModel;
 import ru.gazprom.gtnn.minos.models.RoundModel;
 import ru.gazprom.gtnn.minos.util.*;
 
@@ -143,7 +148,6 @@ public class Start {
 				map.put("indicatorCreate", "date_create");
 				map.put("indicatorRemove", "date_remove");
 				map.put("indicatorHost", "host");
-				
 
 				map.put("ProfileTable", "MinosProfile");
 				map.put("profileID", "id");
@@ -183,6 +187,28 @@ public class Start {
 				map.put("roundStart", "round_start");
 				map.put("roundStop", "round_stop");
 
+				map.put("RoundActorsTable", "MinosRoundActors");
+				map.put("roundActorsID", "id");
+				map.put("roundActorsMinosID", "minos_id");
+				map.put("roundActorsSinnerID", "sinner_id");
+				map.put("roundActorsRoundID", "round_id");
+				map.put("roundActorsHost", "host");
+				map.put("roundActorsFinish", "finishFlag");
+				map.put("roundActorsCreate", "date_create");
+				map.put("roundActorsRemove", "date_remove");
+
+				map.put("RoundProfileTable", "MinosRoundProfile");
+				map.put("roundProfileID", "id");
+				map.put("roundProfileRoundActorsID", "actors_id");
+				map.put("roundProfileProfileID", "profile_id");
+				map.put("roundProfileIndicatorFlagsHI", "indicatorResultFlagsHi");
+				map.put("roundProfileIndicatorFlagsLO", "indicatorResultFlagsLo");
+				map.put("roundProfileCost", "cost");
+
+
+				
+				
+				
 				BasicNode.names = map;
 
 				String connectionUrl = "jdbc:sqlserver://192.168.56.2:1433;databaseName=serg;user=sa;password=Q11W22e33;";
@@ -266,7 +292,13 @@ public class Start {
 								"select id, name, descr, date_create, date_remove, host, round_start, round_stop from MinosRound where id in (%id%)",
 								"%id%", map));
 
+				LoadingCache<Integer, RoundActorsNode> cacheRoundActors = CacheBuilder.
+						newBuilder().
+						build(new MinosCacheLoader<Integer, RoundActorsNode>(RoundActorsNode.class, kdbM,
+								"select id, minos_id, sinner_id, round_id, date_create, date_remove, host, finishFlag from MinosRoundActors where id in (%id%)",
+								"%id%", map));
 
+				
 				
 				
 				
@@ -410,12 +442,18 @@ public class Start {
 						new JScrollPane(new JTree(profileAndPersonInDivisionModel))); //treePersonInDivision)); 
 				
 				
+
+				TableModel minosSinnerTableModel = new RoundActorsTableModel(kdbM, cacheRoundActors, cachePerson,
+						"select id from MinosRoundActors where round_id = %id%", "%id%");
+
+				JTable table = new JTable(minosSinnerTableModel);				
 				
+
 				
 				JLabel roundLabel = new JLabel();
 				
 				JComboBox<RoundNode> cmb = new JComboBox<>(); 
-				RoundModel roundModel = new RoundModel(kdbM, cacheRound, roundLabel, "select id from MinosRound");
+				RoundModel roundModel = new RoundModel(kdbM, cacheRound, roundLabel, table, "select id from MinosRound");
 				cmb.setModel( roundModel );			
 				
 				
@@ -439,8 +477,7 @@ public class Start {
 				
 				JButton btnAddRound = new JButton("+");
 				btnAddRound.addActionListener(new AddRoundListener(kdbM));
-				
-				
+								
 
 				JToolBar tb2 = new JToolBar();
 				tb2.add(btnAddRound);
@@ -448,11 +485,9 @@ public class Start {
 	
 				roundRating.add(tb2, BorderLayout.NORTH);
 				roundRating.add(roundLabel, BorderLayout.SOUTH);
-				
-				JTable table = new JTable(3, 2);				
 				roundRating.add(new JScrollPane(table));
 											
-				//JSplitPane split4 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, splitPane3, roundRating);
+				
 				JSplitPane split4 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, panelMinos_Sinner, roundRating);
 				
 				split4.setDividerLocation(300);				

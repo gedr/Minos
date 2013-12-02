@@ -80,6 +80,7 @@ public class CompetenceFileLoader {
 								profileNodes.get(i).profileDivisionID = cmds.get(i).getFirst();
 								profileNodes.get(i).profilePositionID = cmds.get(i).getSecond();
 								profileNodes.get(i).profileRemove = BasicModel.endTime;
+								profileNodes.get(i).profileItem = i + 1;
 								profileNodes.get(i).profileMinLevel = ( ((1 <= cmds.get(i).getThird()) && 
 										(cmds.get(i).getThird() <= LevelNode.LEVEL_COUNT)) ? cmds.get(i).getThird() : 1);
 							}
@@ -117,7 +118,8 @@ public class CompetenceFileLoader {
 							profileNodes.get(i).insert(kdb, 
 									ProfileNode.PROFILE_DIVISION | ProfileNode.PROFILE_POSITION | 
 									ProfileNode.PROFILE_MIN_LEVEL | ProfileNode.PROFILE_VARIETY |
-									ProfileNode.PROFILE_COMPETENCE_INCARNATIO | ProfileNode.PROFILE_REMOVE);
+									ProfileNode.PROFILE_COMPETENCE_INCARNATIO | ProfileNode.PROFILE_ITEM | 
+									ProfileNode.PROFILE_REMOVE);
 						}
 					}
 					continue;

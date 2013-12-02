@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutionException;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JLabel;
+import javax.swing.JTable;
 
 import com.google.common.base.Preconditions;
 import com.google.common.cache.LoadingCache;
@@ -27,10 +28,12 @@ public class RoundModel extends DefaultComboBoxModel<RoundNode> {
 	private StringBuilder sb;
 
 	private JLabel roundLabel;
+	private JTable actorsTable;
 
 	public RoundModel(DatabaseConnectionKeeper kdb,
 			LoadingCache<Integer, RoundNode> cacheRound,
 			JLabel roundLabel,
+			JTable actorsTable,
 			String sqlLoadRoundIDs) {			
 		this.kdb = kdb;
 		this.cacheRound = cacheRound;
@@ -38,6 +41,7 @@ public class RoundModel extends DefaultComboBoxModel<RoundNode> {
 		this.roundLabel = roundLabel;
 		sb = new StringBuilder();
 		roundIDs = loadRoundIDs();
+		this.actorsTable = actorsTable;
 	}		
 
 	public DatabaseConnectionKeeper getDatabaseConnectionKeeper() {
@@ -122,6 +126,8 @@ public class RoundModel extends DefaultComboBoxModel<RoundNode> {
 		sb.append("Раунд оценки: ").append(node.roundName).append("     описание: ").append(node.roundDescr).
 		append("     [ ").append(node.roundStart).append(" ]  -  [ ").append(node.roundStop).append(" ] ");		
 		roundLabel.setText(sb.toString());
+		((RoundActorsTableModel)actorsTable.getModel()).load(node.roundID);
+		actorsTable.updateUI();
 	}
 		
 	

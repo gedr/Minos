@@ -142,7 +142,7 @@ CREATE TABLE MinosRoundProfile (
 
 CREATE TABLE MinosPersonLogin (
 	person_id		INTEGER NOT NULL,
-	person_login		VARCHAR(2048) DEFAULT NULL
+	personLogin		VARCHAR(2048) DEFAULT NULL
 );
 
 

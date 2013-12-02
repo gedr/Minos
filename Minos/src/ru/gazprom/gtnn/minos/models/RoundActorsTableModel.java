@@ -108,8 +108,10 @@ public class RoundActorsTableModel implements TableModel{
 			Preconditions.checkNotNull(request, "RoundActorsTableModel.load() : makeSQLString return null");
 
 			TableKeeper tk = kdb.selectRows(request);
-			if( (tk == null) || (tk.getRowCount() <= 0) )
+			if( (tk == null) || (tk.getRowCount() <= 0) ) {
 				lstRounActorsIDs = Collections.emptyList();
+				return;
+			}
 
 			Preconditions.checkState(tk.getColumnCount() == 1, 
 					"RoundActorsTableModel.load() : selectRows() return incorrect column count (" + tk.getColumnCount() + ")");

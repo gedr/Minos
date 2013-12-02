@@ -53,14 +53,14 @@ class SinnerPanel extends JPanel {
 			try {
 				RoundActorsNode node = cacheRoundActors.get(roundActorsList.get(index).getFirst());
 				PersonNode pn = cachePerson.get(node.roundActorsSinnerID);
-				ProfileNode prn = cacheProfile.get(roundActorsList.get(index).getFirst());
+				ProfileNode prn = cacheProfile.get(roundActorsList.get(index).getSecond());
 				DivisionNode dn = cacheDivision.get(prn.profileDivisionID);
 				PositionNode pnn = cachePosition.get(prn.profilePositionID);
 				
 				sb.delete(0, sb.length());
-				sb.append("<HTML> <h3> ").append(pn.personSurname).append(" ").
-				append(pn.personName).append(" ").append(pn.personPatronymic).append(" - ").
-				append(pnn.positionName).append(" [ ").append(dn.divisionName).append(" ] </h3>");
+				sb.append("<HTML> <p><h2> ").append(pn.personSurname).append(" ").
+				append(pn.personName).append(" ").append(pn.personPatronymic).append(" </h2> </p><p><h4>").
+				append(pnn.positionName).append(" </p> <p> [ ").append(dn.divisionName).append(" ] </h4></p>");
 				return sb.toString(); 
 			} catch(Exception e) {
 				e.printStackTrace();	
@@ -100,6 +100,7 @@ class SinnerPanel extends JPanel {
 		this.cacheDivision = cacheDivision;
 		this.cachePosition = cachePosition;
 		this.cacheProfile = cacheProfile;
+		
 		try {
 			String sql = " select mra.id, MIN(mrp.profile_id)someone_profle_id from MinosRoundActors mra "
 					+ " inner join MinosRound mr on mr.id = mra.round_id "
@@ -113,11 +114,14 @@ class SinnerPanel extends JPanel {
 			
 			Preconditions.checkNotNull(request,
 							"SinnerPanel.SinnerPanel() : makeListParam() return null");
+			
+			System.out.println(request);
 			TableKeeper tk = kdb.selectRows(request);
 			System.out.println(tk.getRowCount());
+			
 			if( (tk == null) || (tk.getRowCount() == 0) )
 				return;
-			
+				
 			roundActorsList = new ArrayList<>();
 			for(int i = 0; i < tk.getRowCount(); i++) {
 
@@ -154,6 +158,9 @@ class CompetencePanel extends JPanel {
 	public CompetencePanel(DatabaseConnectionKeeper kdb, int minosID) {
 		this.kdb = kdb;
 		try {
+			
+			
+			
 
 				
 		
@@ -300,7 +307,7 @@ public class StartTest extends JFrame {
 
 		frm.setContentPane(cards);
 		((CardLayout)cards.getLayout()).show(cards, SINNER_PANEL);
-		frm.setSize(320, 200);
+		frm.setSize(640, 480);
 		frm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frm.setVisible(true);
 

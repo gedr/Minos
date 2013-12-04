@@ -130,7 +130,7 @@ class SinnerPanel extends JPanel {
 		this.cacheProfile = cacheProfile;
 		
 		try {
-			String sql = " select mra.id, MIN(mrp.profile_id)someone_profle_id from MinosRoundActors mra "
+			String sql = " select mra.id, MIN(mrp.profile_id) as someone_profle_id from MinosRoundActors mra "
 					+ " inner join MinosRound mr on mr.id = mra.round_id "
 					+ " inner join MinosRoundProfile mrp on mrp.actors_id = mra.id "
 					+ " where mra.minos_id = %id% "
@@ -147,7 +147,7 @@ class SinnerPanel extends JPanel {
 						
 			if( (tk == null) || (tk.getRowCount() == 0) )
 				return;
-				
+						
 			roundActorsList = new ArrayList<>();
 			for(int i = 0; i < tk.getRowCount(); i++) {
 				roundActorsList.add(new Pair<>((Integer)tk.getValue(i + 1, 1), (Integer)tk.getValue(i + 1, 2)));				
@@ -1163,8 +1163,7 @@ public class StartTest extends JFrame implements ActionListener{
 	}
 	
 	public static void main(String[] args) {
-		new StartTest("jdbc:sqlserver://192.168.56.2:1433;databaseName=Minos;user=sa;password=Q11W22e33;",
-			"jdbc:sqlserver://192.168.56.2:1433;databaseName=serg;user=sa;password=Q11W22e33;");
+		new StartTest(args[0], args[0]);
 
 	}
 }

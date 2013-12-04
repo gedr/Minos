@@ -6,6 +6,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import javax.swing.ComboBoxEditor;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
@@ -15,15 +17,17 @@ import javax.swing.text.DateFormatter;
 
 import ru.gazprom.gtnn.minos.entity.RoundNode;
 import ru.gazprom.gtnn.minos.models.BasicModel;
+import ru.gazprom.gtnn.minos.models.RoundModel;
 import ru.gazprom.gtnn.minos.util.DatabaseConnectionKeeper;
 
 public class AddRoundListener  implements ActionListener {
 
 	private DatabaseConnectionKeeper kdb;
+	private JComboBox<RoundNode> cb;
 
-	public AddRoundListener(DatabaseConnectionKeeper kdb) {
+	public AddRoundListener(DatabaseConnectionKeeper kdb, JComboBox<RoundNode> cb) {
 		this.kdb = kdb;
-		
+		this.cb = cb;
 	}
 	
 	@Override
@@ -85,6 +89,9 @@ public class AddRoundListener  implements ActionListener {
 				e.printStackTrace();
 				return;
 			}
+			
+			((RoundModel)cb.getModel()).refresh();
+			cb.updateUI();
 		}
 	}
 

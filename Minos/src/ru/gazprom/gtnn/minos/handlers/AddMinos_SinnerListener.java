@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JOptionPane;
+import javax.swing.JTable;
 import javax.swing.JTree;
 import javax.swing.tree.TreePath;
 
@@ -13,6 +14,7 @@ import ru.gazprom.gtnn.minos.entity.RoundNode;
 import ru.gazprom.gtnn.minos.entity.RoundActorsNode;
 import ru.gazprom.gtnn.minos.entity.RoundProfileNode;
 import ru.gazprom.gtnn.minos.models.BasicModel;
+import ru.gazprom.gtnn.minos.models.RoundActorsTableModel;
 import ru.gazprom.gtnn.minos.models.RoundModel;
 import ru.gazprom.gtnn.minos.util.DatabaseConnectionKeeper;
 
@@ -22,13 +24,15 @@ public class AddMinos_SinnerListener implements ActionListener, Runnable {
 	private JTree minosTree;
 	private RoundModel roundModel;
 	private DatabaseConnectionKeeper kdb;
+	private JTable tbl;
 
 
-	public AddMinos_SinnerListener(JTree minosTree, JTree sinnerTree, RoundModel roundModel,
+	public AddMinos_SinnerListener(JTree minosTree, JTree sinnerTree, RoundModel roundModel, JTable tbl,
 			DatabaseConnectionKeeper kdb) {
 		this.minosTree = minosTree;
 		this.sinnerTree = sinnerTree;
 		this.roundModel = roundModel;
+		this.tbl = tbl;
 		this.kdb = kdb;
 	}	
 	
@@ -101,6 +105,9 @@ public class AddMinos_SinnerListener implements ActionListener, Runnable {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-		}		
+		}
+		
+		((RoundActorsTableModel)tbl.getModel()).load(((RoundNode)roundModel.getSelectedItem()).roundID);
+		tbl.updateUI();
 	}
 }

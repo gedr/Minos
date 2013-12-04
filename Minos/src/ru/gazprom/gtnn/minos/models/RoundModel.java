@@ -129,6 +129,13 @@ public class RoundModel extends DefaultComboBoxModel<RoundNode> {
 		((RoundActorsTableModel)actorsTable.getModel()).load(node.roundID);
 		actorsTable.updateUI();
 	}
+	
+	public void refresh() {
+		if(roundIDs != null) 
+			roundIDs.clear();
+		//cacheRound.cleanUp();
+		roundIDs = loadRoundIDs();		
+	}
 		
 	
 	private List<Integer> loadRoundIDs() {		

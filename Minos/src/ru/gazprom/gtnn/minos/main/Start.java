@@ -3,18 +3,9 @@ package ru.gazprom.gtnn.minos.main;
 
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
-import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.swing.ActionMap;
@@ -24,7 +15,6 @@ import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -33,20 +23,16 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
-import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.table.TableModel;
-import javax.swing.text.DateFormatter;
 import javax.swing.tree.TreeCellRenderer;
 
 import com.google.common.cache.*;
 
-import ru.gazprom.gtnn.minos.annotations.TableColumn;
-import ru.gazprom.gtnn.minos.annotations.TableName;
 import ru.gazprom.gtnn.minos.entity.*;
 import ru.gazprom.gtnn.minos.handlers.AddCatalogListener;
 import ru.gazprom.gtnn.minos.handlers.AddCompetenceListener;
@@ -56,6 +42,7 @@ import ru.gazprom.gtnn.minos.handlers.AddRoundListener;
 import ru.gazprom.gtnn.minos.handlers.EditProfileAndPositionAction;
 import ru.gazprom.gtnn.minos.handlers.LoadCompetenceCatalogListener;
 import ru.gazprom.gtnn.minos.handlers.LoadCompetenceFileListener;
+import ru.gazprom.gtnn.minos.handlers.PrintResult;
 import ru.gazprom.gtnn.minos.handlers.ReloadListener;
 import ru.gazprom.gtnn.minos.models.BasicModel;
 import ru.gazprom.gtnn.minos.models.CatalogModel;
@@ -74,32 +61,36 @@ import ru.gazprom.gtnn.minos.models.RoundModel;
 import ru.gazprom.gtnn.minos.util.*;
 
 
-class GUI implements Runnable{
-
-	private Map<String, String> map;
-
-
-	public GUI(Map<String, String> map) {
-		this.map = map;
-	}
-	
-	
-	@Override
-	public void run() {
-		// TODO Auto-generated method stub
-		
-	}
-	
-}
 
 
 public class Start {
-	
+	private String connectionUrl;
+	private DatabaseConnectionKeeper kdb, kdbM;
+	private Map<String, String> map = new HashMap<>();
 
-	public static void makeUI() {
+	public Start(String connectionUrl) {
+		this.connectionUrl = connectionUrl;
+		
+		try {
+			kdb = new DatabaseConnectionKeeper(connectionUrl, null, null);
+			kdbM = kdb;
+
+			kdb.connect();		
+			
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null,
+				    "Возникла ошибка при подключении к базе данных",
+				    "Ошибка",
+				    JOptionPane.WARNING_MESSAGE);
+			e.printStackTrace();
+		}
+		makeUI();
+	}
+
+	public void makeUI() {
 
 		EventQueue.invokeLater(new Runnable() {
-			private Map<String, String> map = new HashMap<>();
+			
 			
 			public void fillMap() {
 				map.put("divisionID", "tOrgStruID");
@@ -225,11 +216,6 @@ public class Start {
 				
 				BasicNode.names = map;
 
-				String connectionUrl = "jdbc:sqlserver://192.168.56.2:1433;databaseName=serg;user=sa;password=Q11W22e33;";
-				DatabaseConnectionKeeper kdb = new DatabaseConnectionKeeper(connectionUrl, null, null);
-
-				String connectionUrl1 = "jdbc:sqlserver://192.168.56.2:1433;databaseName=Minos;user=sa;password=Q11W22e33;";
-				DatabaseConnectionKeeper kdbM = new DatabaseConnectionKeeper(connectionUrl1, null, null);
 				
 /*
 				DatabaseConnectionKeeper kdb;
@@ -339,8 +325,8 @@ public class Start {
 				
 				
 				BasicModel divisionModel = new DivisionModel(kdb, cacheDivision, 
-						"select tOrgStruID from tOrgStru where Parent = 0", 
-						"select tOrgStruID from tOrgStru where Parent = %id%", "%id%");
+						"select tOrgStruID from tOrgStru where Parent = 0  and isnull(Isdelete, 0) = 0", 
+						"select tOrgStruID from tOrgStru where Parent = %id% and isnull(Isdelete, 0) = 0", "%id%");
 				
 				BasicModel positionInDivisionModel = new PositionInDivisionModel(kdb, cachePosition, divisionModel, 
 						"select distinct(tStatDolSpId) from tOrgAssignCur where tOrgStruId = %id%", 
@@ -396,9 +382,9 @@ public class Start {
 				JTree treeCompetenceAndCatalog = new JTree(competenceAndCatalogModel);
 				treeCompetenceAndCatalog.setRootVisible(false);				
 				treeCompetenceAndCatalog.setCellRenderer(tcr);
-				treeCompetenceAndCatalog.setDragEnabled(true);
-				treeCompetenceAndCatalog.setTransferHandler(new MyTransferHandler("tcc"));
-				treeCompetenceAndCatalog.setDropMode(DropMode.ON);
+				//treeCompetenceAndCatalog.setDragEnabled(true);
+				//treeCompetenceAndCatalog.setTransferHandler(new MyTransferHandler("tcc"));
+				//treeCompetenceAndCatalog.setDropMode(DropMode.ON);
 				
 				JTree treeCatalog = new JTree(catalogModel);
 				treeCatalog.setRootVisible(false);
@@ -409,19 +395,23 @@ public class Start {
 				tper.setDragEnabled(true);
 				tper.setTransferHandler();
 				*/
-				JTree treeProfileAndPositionInDivision = new JTree(profileAndPositionInDivisionModel); //tmpos);
-				treeProfileAndPositionInDivision.setCellRenderer(tcr);
-				treeProfileAndPositionInDivision.setDragEnabled(true);
-				treeProfileAndPositionInDivision.setTransferHandler(new MyTransferHandler("tpos"));
-				treeProfileAndPositionInDivision.setDropMode(DropMode.ON);
+				JTree treeProfileAndPositionInDivision1 = new JTree(profileAndPositionInDivisionModel);
+				treeProfileAndPositionInDivision1.setCellRenderer(tcr);
+
+				JTree treeProfileAndPositionInDivision2 = new JTree(profileAndPositionInDivisionModel);
+				treeProfileAndPositionInDivision2.setCellRenderer(tcr);
+
+				//treeProfileAndPositionInDivision.setDragEnabled(true);
+				//treeProfileAndPositionInDivision.setTransferHandler(new MyTransferHandler("tpos"));
+				//treeProfileAndPositionInDivision.setDropMode(DropMode.ON);
 
 				String action = "changeWnd";
-				InputMap im =treeProfileAndPositionInDivision.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+				InputMap im =treeProfileAndPositionInDivision1.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 				im.put(KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0), action);
 
-				ActionMap actionMap = treeProfileAndPositionInDivision.getActionMap();
-				actionMap.put(action, new EditProfileAndPositionAction(treeProfileAndPositionInDivision, cacheLevel));
-				treeProfileAndPositionInDivision.setActionMap(actionMap);
+				ActionMap actionMap = treeProfileAndPositionInDivision1.getActionMap();
+				actionMap.put(action, new EditProfileAndPositionAction(treeProfileAndPositionInDivision1, cacheLevel));
+				treeProfileAndPositionInDivision1.setActionMap(actionMap);
 
 				JFrame frm = new JFrame("test");
 
@@ -431,34 +421,43 @@ public class Start {
 				treeCompetence.setTransferHandler(new MyTransferHandler("tcom"));
 				treeCompetence.setDropMode(DropMode.ON);
 				treeCompetence.setName("Competence");
-			
 				
-				JButton btnRefreshCatalog = new JButton("refresh catalog");
+				JTree treeProfileAndPersonInDivisionModel = new JTree(profileAndPersonInDivisionModel);
+				treeProfileAndPersonInDivisionModel.setCellRenderer(tcr);
+				
+				JButton btnRefreshCatalog = new JButton(new ImageIcon(getClass().getResource("/img/repeat_32.png")));
+				btnRefreshCatalog.setToolTipText("Обновить дерево");
 				btnRefreshCatalog.addActionListener(new ReloadListener(treeCompetenceAndCatalog));
 								
-				JButton btnAddCatalog = new JButton("add catalog");
+				JButton btnAddCatalog = new JButton(new ImageIcon(getClass().getResource("/img/folder_add_32.png")));
+				btnAddCatalog.setToolTipText("Добавить каталог");
 				btnAddCatalog.addActionListener(new AddCatalogListener(treeCompetenceAndCatalog));
 
-				JButton btnAddCompetence = new JButton("add competence");
+				JButton btnAddCompetence = new JButton(new ImageIcon(getClass().getResource("/img/book_add_32.png")));
+				btnAddCompetence.setToolTipText("Добавить новую компетенцию");
 				btnAddCompetence.addActionListener(new AddCompetenceListener(treeCompetenceAndCatalog));
 
-				JButton btnAddIndicator = new JButton("add indicator");
+				JButton btnAddIndicator = new JButton(new ImageIcon(getClass().getResource("/img/page_add_32.png")));
+				btnAddIndicator.setToolTipText("Добавить индикатор");
 				btnAddIndicator.addActionListener(new AddIndicatorListener(treeCompetenceAndCatalog));
 
-				JButton btnLoadCompetenceDir = new JButton("load competence dir");
+				JButton btnLoadCompetenceDir = new JButton(new ImageIcon(getClass().getResource("/img/folder_down_32.png")));
+				btnLoadCompetenceDir.setToolTipText("Загрузить каталоги с компетенциями");
 				btnLoadCompetenceDir.addActionListener(new LoadCompetenceCatalogListener(treeCompetenceAndCatalog, frm));
 
-				JButton btnLoadCompetenceFile = new JButton("load competence file");
+				JButton btnLoadCompetenceFile = new JButton(new ImageIcon(getClass().getResource("/img/page_down_32.png")));
+				btnLoadCompetenceFile.setToolTipText("Загрузить файл с компетенциями");
 				btnLoadCompetenceFile.addActionListener(new LoadCompetenceFileListener(treeCompetenceAndCatalog, frm));
 
-				JButton btnMakeLink = new JButton("->");
-				btnMakeLink.addActionListener(new MakeProfileAction(treeCompetenceAndCatalog, treeProfileAndPositionInDivision));
+				JButton btnMakeLink = new JButton(new ImageIcon(getClass().getResource("/img/next_32.png")));
+				btnMakeLink.setToolTipText("Создать профиль с указаными компетенциями");
+				btnMakeLink.addActionListener(new MakeProfileAction(treeCompetenceAndCatalog, treeProfileAndPositionInDivision1));
 				
 				JToolBar tb = new JToolBar();
 				tb.add(btnAddCatalog);
 				tb.add(btnAddCompetence);
-				tb.add(btnRefreshCatalog);
 				tb.add(btnAddIndicator);
+				tb.add(btnRefreshCatalog);				
 				tb.add(btnLoadCompetenceDir);
 				tb.add(btnLoadCompetenceFile);
 				tb.add(btnMakeLink);
@@ -470,18 +469,27 @@ public class Start {
 				
 				JSplitPane split1 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
 						competenceAndCatalogPanel,   
-						new JScrollPane(treeProfileAndPositionInDivision));
+						new JScrollPane(treeProfileAndPositionInDivision1));
 
 				JSplitPane split2 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
-						new JScrollPane(new JTree(profileAndPositionInDivisionModel)), 
-						new JScrollPane(new JTree(profileAndPersonInDivisionModel))); //treePersonInDivision)); 
+						new JScrollPane(treeProfileAndPositionInDivision2), 
+						new JScrollPane(treeProfileAndPersonInDivisionModel)); 
 				
 				
 
 				TableModel minosSinnerTableModel = new RoundActorsTableModel(kdbM, cacheRoundActors, cachePerson,
 						"select id from MinosRoundActors where round_id = %id%", "%id%");
 
-				JTable table = new JTable(minosSinnerTableModel);				
+				JTable table = new JTable(minosSinnerTableModel);
+				String actionT = "printTable";
+				InputMap imt =table.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+				imt.put(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0), actionT);
+
+				ActionMap actionMapT = table.getActionMap();
+				actionMapT.put(actionT, new PrintResult(table, kdbM));
+				table.setActionMap(actionMapT);
+
+				
 				
 
 				
@@ -502,7 +510,7 @@ public class Start {
 				panelMinos_Sinner.add(splitPane3, BorderLayout.CENTER);
 				
 				JButton btnAddMinos_Sinner = new JButton("add");
-				btnAddMinos_Sinner.addActionListener(new AddMinos_SinnerListener(treeMinoses, treeSinners, roundModel, kdbM));
+				btnAddMinos_Sinner.addActionListener(new AddMinos_SinnerListener(treeMinoses, treeSinners, roundModel, table, kdbM));
 				panelMinos_Sinner.add(btnAddMinos_Sinner, BorderLayout.SOUTH);
 				
 				
@@ -511,7 +519,7 @@ public class Start {
 				
 				
 				JButton btnAddRound = new JButton("+");
-				btnAddRound.addActionListener(new AddRoundListener(kdbM));
+				btnAddRound.addActionListener(new AddRoundListener(kdbM, cmb));
 								
 
 				JToolBar tb2 = new JToolBar();
@@ -539,7 +547,6 @@ public class Start {
 				frm.setVisible(true);			
 			}
 		});
-		
 	}
 	
 	public static void setLaF(String name) {
@@ -561,10 +568,12 @@ public class Start {
 	}
 	
 	public static void main(String[] args) {
-		//setLaF("Nimbus");
+		setLaF("Nimbus");
 		//			Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
 
-		makeUI();
+		System.out.println(args[0]);
+		new Start(args[0]);
+		//makeUI();
 	}
 
 }

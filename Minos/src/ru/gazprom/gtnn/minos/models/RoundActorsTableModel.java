@@ -59,7 +59,7 @@ public class RoundActorsTableModel implements TableModel{
 		Preconditions.checkState( (0 <= rowIndex) && (rowIndex < lstRounActorsIDs.size()), 
 				"RoundActorsTableModel.getValueAt() : rowIndex out of bounds");
 
-		String result = "not find";
+		String result = "not found";
 		try {
 			RoundActorsNode nodeActors = cacheRoundActors.get(lstRounActorsIDs.get(rowIndex));
 			PersonNode nodePerson = (columnIndex == 0 ? cachePerson.get(nodeActors.roundActorsMinosID)
@@ -67,7 +67,7 @@ public class RoundActorsTableModel implements TableModel{
 			result = nodePerson.personSurname + " " + nodePerson.personName + " "  + nodePerson.personPatronymic;  
 
 		} catch (Exception e) {
-			result = "not find";
+			result = "not found";
 			e.printStackTrace();
 		}
 		
@@ -93,6 +93,22 @@ public class RoundActorsTableModel implements TableModel{
 	@Override
 	public void removeTableModelListener(TableModelListener arg0) {
 		// TODO Auto-generated method stub
+		
+	}
+	
+	public RoundActorsNode getActors(int rowIndex) {
+		Preconditions.checkState( (0 <= rowIndex) && (rowIndex < lstRounActorsIDs.size()), 
+				"RoundActorsTableModel.getActors() : rowIndex out of bounds");
+
+		RoundActorsNode node = null; 
+		try {
+			node = cacheRoundActors.get(lstRounActorsIDs.get(rowIndex));
+		} catch (Exception e) {			
+			e.printStackTrace();
+			node = null;
+		}
+		
+		return node;
 		
 	}
 	

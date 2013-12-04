@@ -8,8 +8,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,19 +24,23 @@ import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.table.TableModel;
+import javax.swing.text.DateFormatter;
 import javax.swing.tree.TreeCellRenderer;
 
 import com.google.common.cache.*;
@@ -92,9 +99,9 @@ public class Start {
 	public static void makeUI() {
 
 		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-
-				Map<String, String> map = new HashMap<>();
+			private Map<String, String> map = new HashMap<>();
+			
+			public void fillMap() {
 				map.put("divisionID", "tOrgStruID");
 				map.put("divisionParent", "Parent");
 				map.put("divisionName", "FullName");
@@ -203,7 +210,14 @@ public class Start {
 				map.put("roundProfileProfileID", "profile_id");
 				map.put("roundProfileIndicatorFlagsHI", "indicatorResultFlagsHi");
 				map.put("roundProfileIndicatorFlagsLO", "indicatorResultFlagsLo");
-				map.put("roundProfileCost", "cost");
+				map.put("roundProfileCost", "cost");				
+			}
+
+			
+			public void run() {
+				fillMap();
+
+				
 
 
 				
@@ -216,10 +230,32 @@ public class Start {
 
 				String connectionUrl1 = "jdbc:sqlserver://192.168.56.2:1433;databaseName=Minos;user=sa;password=Q11W22e33;";
 				DatabaseConnectionKeeper kdbM = new DatabaseConnectionKeeper(connectionUrl1, null, null);
-
+				
+/*
+				DatabaseConnectionKeeper kdb;
+				DatabaseConnectionKeeper kdbM;
+				JTextField url = new JTextField(100);
+				
+				JComponent[] inputs = new JComponent[] {
+						new JLabel("db url"),
+						url,
+				};
+				
+				
+				if( (JOptionPane.OK_OPTION != JOptionPane.showOptionDialog(null, inputs, "db url dialog", 
+						JOptionPane.OK_CANCEL_OPTION, 
+						JOptionPane.QUESTION_MESSAGE, 
+						null, null, null)) ||
+						(url.getText().isEmpty()) ) {
+					return;
+				}
+				String connectionUrl = url.getText();
+				kdb = new DatabaseConnectionKeeper(connectionUrl, null, null);
+				kdbM = kdb;
+				*/
 				try {
 					kdb.connect();
-					kdbM.connect();
+					if(kdb != kdbM) kdbM.connect();
 				} catch (SQLException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -395,8 +431,7 @@ public class Start {
 				treeCompetence.setTransferHandler(new MyTransferHandler("tcom"));
 				treeCompetence.setDropMode(DropMode.ON);
 				treeCompetence.setName("Competence");
-				
-					
+			
 				
 				JButton btnRefreshCatalog = new JButton("refresh catalog");
 				btnRefreshCatalog.addActionListener(new ReloadListener(treeCompetenceAndCatalog));
@@ -496,15 +531,12 @@ public class Start {
 				tabbedPane.addTab("компетенция - профиль", split1);
 				tabbedPane.addTab("профиль - сотрудник", split2);
 				tabbedPane.addTab("эксперт - испытуемый", split4);
-				//tabbedPane.addTab("check", new JScrollPane(new JTree(tcpd)));
-				
 				
 				frm.add(tabbedPane);
 
 				frm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 				frm.pack();
 				frm.setVisible(true);			
-			
 			}
 		});
 		
@@ -528,53 +560,10 @@ public class Start {
 		System.out.println(name + (fOk ? " LaF set ok " : " LaF cannot set "));
 	}
 	
-	
-	public static void test()  {
-		try {
-			String connectionUrl = "jdbc:sqlserver://192.168.56.2:1433;databaseName=Minos;user=sa;password=Q11W22e33;";
-			Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-			DatabaseConnectionKeeper kdb = new DatabaseConnectionKeeper(
-					connectionUrl, null, null);
-			kdb.connect();
-			int key = kdb.insertRow(true, "CATALOG", 
-					Arrays.asList(new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "name", "Test"),
-					new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "parent", Integer.valueOf(10)),
-					new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "item", Integer.valueOf(1)),
-					new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "date_create", new java.sql.Date(1)),
-					new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "date_remove", new java.sql.Date(1000))
-					));
-			System.out.println(key);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		 
-	}
-		
-	
-	
-	public static void test2()  {
-		try {
-			String connectionUrl = "jdbc:sqlserver://192.168.56.2:1433;databaseName=Minos;user=sa;password=Q11W22e33;";
-			Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-			DatabaseConnectionKeeper kdb = new DatabaseConnectionKeeper(
-					connectionUrl, null, null);
-			kdb.connect();
-			int key = kdb.updateRow("CATALOG", 
-					Arrays.asList(new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "name", "TestUpdate"),
-							new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "item", Integer.valueOf(100))),
-							new DatabaseConnectionKeeper.RecordFeld(java.sql.Types.VARCHAR, "id", Integer.valueOf(14)));
-					
-			System.out.println(key);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		 
-	}
-	
 	public static void main(String[] args) {
-		//PersonNode node =  new PersonNode();
-		//test2();
 		//setLaF("Nimbus");
+		//			Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+
 		makeUI();
 	}
 

@@ -13,15 +13,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EventListener;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -34,13 +35,11 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.JWindow;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.event.ListDataListener;
-import javax.swing.plaf.basic.BasicTreeUI.MouseHandler;
 
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
@@ -54,17 +53,19 @@ import ru.gazprom.gtnn.minos.entity.PersonNode;
 import ru.gazprom.gtnn.minos.entity.PositionNode;
 import ru.gazprom.gtnn.minos.entity.ProfileNode;
 import ru.gazprom.gtnn.minos.entity.RoundActorsNode;
-import ru.gazprom.gtnn.minos.entity.RoundNode;
+import ru.gazprom.gtnn.minos.entity.RoundProfileNode;
 import ru.gazprom.gtnn.minos.util.DatabaseConnectionKeeper;
 import ru.gazprom.gtnn.minos.util.MinosCacheLoader;
 import ru.gazprom.gtnn.minos.util.TableKeeper;
 import ru.gedr.util.tuple.Pair;
+import ru.gedr.util.tuple.Triplet;
 
 
 class SinnerPanel extends JPanel {
+	private static final long serialVersionUID = 1L;
 	public static final String BUTTON_NAME = "START_RAITING";
 	private JList<String> sinnerList;
-	private DatabaseConnectionKeeper kdb;
+	//private DatabaseConnectionKeeper kdb;
 	private List<Pair<Integer, Integer>> roundActorsList; //first element is RoundActorsID, second element is ProfileID 
 	private LoadingCache<Integer, PersonNode> cachePerson;
 	private LoadingCache<Integer, RoundActorsNode> cacheRoundActors;
@@ -121,7 +122,7 @@ class SinnerPanel extends JPanel {
 			LoadingCache<Integer, DivisionNode> cacheDivision,
 			LoadingCache<Integer, PositionNode> cachePosition, 
 			LoadingCache<Integer, ProfileNode> cacheProfile		) {
-		this.kdb = kdb;
+		//this.kdb = kdb;
 		this.cachePerson = cachePerson;
 		this.cacheRoundActors = cacheRoundActors;
 		this.cacheDivision = cacheDivision;
@@ -149,14 +150,8 @@ class SinnerPanel extends JPanel {
 				
 			roundActorsList = new ArrayList<>();
 			for(int i = 0; i < tk.getRowCount(); i++) {
-
-				roundActorsList.add(new Pair<>((Integer)tk.getValue(i + 1, 1), (Integer)tk.getValue(i + 1, 2)));
-				
-			}
-		
-			
-			
-		
+				roundActorsList.add(new Pair<>((Integer)tk.getValue(i + 1, 1), (Integer)tk.getValue(i + 1, 2)));				
+			}		
 		} catch (Exception e) {
 			e.printStackTrace();
 			return;
@@ -228,65 +223,84 @@ class SinnerPanel extends JPanel {
 
 
 class CompetencePanel extends JPanel implements ActionListener {
+	private static final long serialVersionUID = 1L;
 	public static final String BUTTON_NAME = "SELECT_SINNER";
 	private DatabaseConnectionKeeper kdb;
-	private JComboBox<CompetenceNode> competenceComboBox;
+
 	private JLabel competenceName;
 	private JTextArea competenceDescr;
 	private JList<IndicatorNode> indicatorList;
 	private JButton btnPrev;
 	private JButton btnSinner;
 	private JButton btnNext;
+	
 	private int minosID;
 	private int sinnerID;
-	private int[] round;
-	private List<Pair<Integer, Integer>> profiles; // fist element is profile id, second element is competence id
+	//private int[] round;
+	private int currentCompetenceNumber = 0;
+	
+	// fist element is profile id, second element is competence id, third element have IDs RoundProfileNode
+	private List<Triplet<Integer, Integer, List<Integer>>> profiles; 
+	
 	private List<Pair<Integer, Boolean>> indicators; // fist element is idicatorID, second element is check status
+	
 	private LoadingCache<Integer, CompetenceNode> cacheCompetence;
 	private LoadingCache<Integer, IndicatorNode> cacheIndicator;
-	private int currentCompetenceNumber = 0;
+	private LoadingCache<Integer, RoundProfileNode> cacheRoundProfile;
+	
+	private Map<Integer, List<Pair<Integer, Boolean>>> storageIndicators = new HashMap<>();
 	private Map<String, ImageIcon> img;
 	
 	
 	
 	public CompetencePanel(DatabaseConnectionKeeper kdb, int minosID, 
 			LoadingCache<Integer, CompetenceNode> cacheCompetence,
-			LoadingCache<Integer, IndicatorNode> cacheIndicator) {
+			LoadingCache<Integer, IndicatorNode> cacheIndicator,
+			LoadingCache<Integer, RoundProfileNode> cacheRoundProfile) {
 		this.kdb = kdb;
 		this.minosID = minosID;
 		this.cacheCompetence = cacheCompetence;
 		this.cacheIndicator = cacheIndicator;
+		this.cacheRoundProfile = cacheRoundProfile;
 		img = new HashMap<>();
 		
+		System.out.println(getClass().getResource("/img/prefs_24.png"));
+		ImageIcon ii = new ImageIcon(getClass().getResource("/img/prefs_24.png"));
+		System.out.println(ii);
+		System.out.println(ii == null);
 		img.put("prefs_24", new ImageIcon(getClass().getResource("/img/prefs_24.png")) );
 		img.put("prefs_shadow_24", new ImageIcon(getClass().getResource("/img/prefs_shadow_24.png")) );
+		img.put("book_green_24", new ImageIcon(getClass().getResource("/img/book_green_32.png")) );
+		img.put("book_red_24", new ImageIcon(getClass().getResource("/img/book_red_32.png")) );
+		img.put("book_yellow_24", new ImageIcon(getClass().getResource("/img/book_yellow_32.png")) );
 		try {			
-			makeUI();				
-		
-		
+			makeUI();		
 		} catch (Exception e) {
-
 			e.printStackTrace();
 		}
 	}
 	
 	public boolean setSinnerID(int sinnerID) {
 		this.sinnerID = sinnerID;
+
+		if(profiles != null) profiles.clear();
+		if(indicators != null) indicators.clear();
+		if(storageIndicators != null) storageIndicators.clear();
+
 		return load();
 	}
 	
 	public boolean load() {
+		/*
 		round = getRounds();
 		if(round == null) return false;
-		
+		*/
 		if( (profiles != null) && (profiles.size() > 0) )
 			profiles.clear();
 	
 		profiles = loadProfile();
 		if(profiles == null) return false;
-		
-		
-		
+				
 		currentCompetenceNumber = 0;
 		btnPrev.setEnabled(false);
 		changeCompetence();
@@ -294,20 +308,57 @@ class CompetencePanel extends JPanel implements ActionListener {
 		return true;		
 	}
 	
+	private void setText() {
+		CompetenceNode node = null;
+		
+		try {
+			node = cacheCompetence.get(profiles.get(currentCompetenceNumber).getSecond());
+		} catch (ExecutionException ee) {
+			ee.printStackTrace();
+			node = null;
+		}
+
+		if(node != null) {
+			competenceName.setText(node.competenceName);
+			competenceName.setIcon(node.competenceVariety == 1 ? img.get("book_green_24") : 
+				(node.competenceVariety == 2 ? img.get("book_yellow_24") : img.get("book_red_24")));
+			competenceDescr.setText(node.competenceDescr);
+		}
+	}
+	
+	
 	private void changeCompetence() {
 		try {
-			competenceName.setText(cacheCompetence.get(profiles.get(currentCompetenceNumber).getSecond()).competenceName);
-			competenceDescr.setText(cacheCompetence.get(profiles.get(currentCompetenceNumber).getSecond()).competenceDescr);
+			if(EventQueue.isDispatchThread()) {
+				setText();
+			} else
+				EventQueue.invokeAndWait(new Runnable() {
 
-			if( (indicators != null) && (indicators.size() > 0) )
-				indicators.clear();			
-			indicators = loadIndiactor(cacheCompetence.get(profiles.get(currentCompetenceNumber).getSecond()).competenceIncarnatio);
+					@Override
+					public void run() {
+						setText();
+					}
+				});
+
+			int competenceIncarnatio = cacheCompetence.get(profiles.get(currentCompetenceNumber).getSecond()).competenceIncarnatio;
+			indicators = storageIndicators.get(competenceIncarnatio);
+			if(indicators == null) {
+				indicators = loadIndiactor(competenceIncarnatio);
+				storageIndicators.put(competenceIncarnatio, indicators);
+			}
+			
 			indicatorList.updateUI();
-		} catch (ExecutionException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}		
 	}
 	
+	
+	/**
+	 * загрузка актуальных(действующих) индикаторов для компетенции
+	 * @param comptenceIncarnatio - инкарнация компетенции
+	 * @return список индикаторов
+	 */
 	public List<Pair<Integer, Boolean>> loadIndiactor(int comptenceIncarnatio) {
 		String sql = " select id from MinosIndicator "
 				+ " where  GETDATE() between date_create and date_remove "
@@ -325,8 +376,25 @@ class CompetencePanel extends JPanel implements ActionListener {
 				return null;
 		
 			List<Pair<Integer, Boolean>> lst = new ArrayList<>();
-			for(int i = 0; i < tk.getRowCount(); i++)
-				lst.add(new Pair<>((Integer)tk.getValue(i + 1, 1), false));
+			for(int i = 0; i < tk.getRowCount(); i++) {				
+				
+				long hi = 0;
+				long lo = 0;
+				// получение общего индикатора установленных флагов из всех профилей 
+				for(int j = 0; j < profiles.get(currentCompetenceNumber).getThird().size(); j++) {
+					int roundProfileID = profiles.get(currentCompetenceNumber).getThird().get(j);
+					RoundProfileNode rpn = cacheRoundProfile.get(roundProfileID);
+					hi |= rpn.roundProfileIndicatorFlagsHI; 
+					lo |= rpn.roundProfileIndicatorFlagsLO;
+				}
+				
+				if(i < 64)
+					lst.add(new Pair<>((Integer)tk.getValue(i + 1, 1), ((lo & (1 << i)) != 0 ? true : false) ));
+				if( (64 <= i) && (i < 128) ) 
+					lst.add(new Pair<>((Integer)tk.getValue(i + 1, 1), ((hi & (1 << (i - 64))) != 0 ? true : false) ));		
+				
+				Preconditions.checkArgument(i < 128, "CompetencePanel.loadIndiactor() : too many indicators (more than 128)"); 
+			}
 			return lst;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -335,7 +403,57 @@ class CompetencePanel extends JPanel implements ActionListener {
 		return null;
 	}
 	
-	public List<Pair<Integer, Integer>> loadProfile() {
+	/**
+	 * загрузка действующих раундов для конкретного эксперта, тестируемого и профиля
+	 * @param profileID
+	 * @return
+	 */
+	public List<Integer> loadRoundProfilesIDs(int profileID) {
+		String sql1 = " select mrp.id from MinosRoundActors mra "
+				+ " inner join MinosRound mr on mr.id = mra.round_id "
+				+ " inner join MinosRoundProfile mrp on mrp.actors_id = mra.id "
+				+ " where GETDATE() between mr.round_start and mr.round_stop "
+				+ " and GETDATE() between mra.date_create and mra.date_remove "
+				+ " and mra.minos_id = %id1% and sinner_id = %id2% and mrp.profile_id = %id3% ";
+
+		try {
+			String sql2 = kdb.makeSQLString(sql1, "%id1%", String.valueOf(minosID));
+			Preconditions.checkNotNull(sql2,
+							"CompetencePanel.loadProfile() : makeListParam() return null (1)");
+			
+			String sql3 = kdb.makeSQLString(sql2, "%id2%", String.valueOf(sinnerID));
+			Preconditions.checkNotNull(sql3,
+							"CompetencePanel.loadProfile() : makeListParam() return null (2)");
+
+			String request = kdb.makeSQLString(sql3, "%id3%", String.valueOf(profileID));
+			Preconditions.checkNotNull(request,
+							"CompetencePanel.loadProfile() : makeListParam() return null (3)");
+
+			TableKeeper tk;
+
+			tk = kdb.selectRows(request);
+
+			if ((tk == null) || (tk.getRowCount() <= 0))
+				return null;
+			
+			List<Integer> lst = new ArrayList<>();
+			for(int i = 0; i < tk.getRowCount(); i++) 
+				lst.add((Integer)tk.getValue(i + 1, 1));
+			
+			return lst;
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+	
+	/**
+	 * Загружается список актуальных(действующих) пар<код_профиля, код_компетенции>
+	 * @return список пар<код_профиля, код_компетенции>
+	 */
+	public List<Triplet<Integer, Integer, List<Integer>>> loadProfile() {
 		String sql = " select distinct(mrp.profile_id), mc.id competence_id from MinosRoundActors mra "
 				+ " inner join MinosRound mr on mr.id = mra.round_id "
 				+ " inner join MinosRoundProfile mrp on mrp.actors_id = mra.id "
@@ -359,9 +477,15 @@ class CompetencePanel extends JPanel implements ActionListener {
 			if ((tk == null) || (tk.getRowCount() <= 0))
 				return null;
 			
-			List<Pair<Integer, Integer>> lst = new ArrayList<>();
-			for(int i = 0; i < tk.getRowCount(); i++) 
-				lst.add(new Pair<>((Integer)tk.getValue(i + 1, 1), (Integer)tk.getValue(i + 1, 2)));
+			List<Triplet<Integer, Integer, List<Integer>>> lst = new ArrayList<>();
+			for(int i = 0; i < tk.getRowCount(); i++) {
+			
+				int profileID = (Integer)tk.getValue(i + 1, 1);
+				List<Integer> rounds = loadRoundProfilesIDs(profileID);
+				lst.add(new Triplet<>(profileID, 
+						(Integer)tk.getValue(i + 1, 2),
+						(rounds != null ? rounds : Collections.<Integer>emptyList()) ) );
+			}
 			
 			return lst;				
 		} catch (Exception e) {
@@ -369,9 +493,14 @@ class CompetencePanel extends JPanel implements ActionListener {
 		}
 		
 		return null;
-
 	}
 	
+	
+	/**
+	 * Возращает спсиок открытых раундов для данного эксперта и тестируемого
+	 * @return массив ID раундов
+	 */
+	/*
 	public int[] getRounds() {
 		String sql = " select distinct(mra.round_id) from MinosRoundActors mra "
 				+ " inner join MinosRound mr on mr.id = mra.round_id "
@@ -401,7 +530,11 @@ class CompetencePanel extends JPanel implements ActionListener {
 
 		return null;
 	}
+	*/
 	
+	/**
+	 * инициализация swing компонентов
+	 */
 	public void makeUI() {
 		MyMouseHandler mh = new MyMouseHandler();
 		GridBagLayout gridBagLayout = new GridBagLayout();
@@ -518,6 +651,9 @@ class CompetencePanel extends JPanel implements ActionListener {
 		panel.add(btnNext);
 	}
  
+	/**
+	 * обработчик событий от кнопок 
+	 */
 	@Override
 	public void actionPerformed(ActionEvent arg) {
 		if(arg.getSource() == btnNext) {
@@ -539,19 +675,23 @@ class CompetencePanel extends JPanel implements ActionListener {
 			changeCompetence();
 		}
 		if(arg.getSource() == btnSinner) {
+			makeCost();
 			fireActionPerformed(arg);
-		}		
-
+		}
 	}
-	
-	
+		
 	public void addActionListener(ActionListener l) {
 		listenerList.add(ActionListener.class, l);
 	}
+	
 	public void removeActionListener(ActionListener l) {
 		listenerList.remove(ActionListener.class, l);
 	}
 
+	/**
+	 * вызов слушателей события
+	 * @param event - сообщение от кнопки
+	 */
 	protected void fireActionPerformed(ActionEvent event) {
 		EventListener[] listeners = listenerList.getListeners(ActionListener.class);
 
@@ -562,14 +702,30 @@ class CompetencePanel extends JPanel implements ActionListener {
 
 	/**
 	 * расчет оценки для текущих индикаторов
+	 * @return минимальная оценка
 	 */
-	private int makeCost() {
+	public int makeCost() {
 		int[][] countIndicatorsByLevel =  getCountIndicatorsByLevel();
-		printArray(countIndicatorsByLevel);
-	
-		return 0;
+		//printArray(countIndicatorsByLevel);
+		
+		int level = 0;
+		// будем использовать 0 бит как 0.5, тогда 1 строка матрицы содержит половиные значения, а для второй применим сдвиг <<
+		for(int i = 0; i < LevelNode.LEVEL_COUNT; i++) {
+			if( countIndicatorsByLevel[0][i] > (countIndicatorsByLevel[1][i] << 1) )
+				break;
+			level = i + 1;
+		}	
+		//System.out.println(level);
+		saveIndicatorsState(level);
+			
+		return level;
 	}
 	
+	/**
+	 * вспомогательная функция печати 2х мерного массива
+	 * @param arr - двухмерный массив
+	 */
+	/*
 	private void printArray(int[][] arr) {
 		
 		
@@ -580,7 +736,14 @@ class CompetencePanel extends JPanel implements ActionListener {
 		}
 				
 	}
+	*/
 	
+	/**
+	 * создание двухмерного массива 
+	 * (1 строка - кол-во индикаторов по уровням) 
+	 * (2 строка - кол-во индикаторов у которых установлен флаг)
+	 * @return двухмерный массив
+	 */
 	private int[][] getCountIndicatorsByLevel() {
 		int [][] arr = new int [2][LevelNode.LEVEL_COUNT];
 		
@@ -605,7 +768,56 @@ class CompetencePanel extends JPanel implements ActionListener {
 		return arr;
 	}
 	
+	/**
+	 * Сохраняем утсановленые флажки
+	 * @return пара <младшие 64 бита, старшие 64 бита>
+	 */
+	private void saveIndicatorsState(int cost) {
+		long lo = 0;
+		long hi = 0;		
+
+		for (int i = 0; i < indicators.size(); i++) {
+			if(i < 64)
+				lo |= (indicators.get(i).getSecond() ? (1 << i) : 0);		
+
+			if( (64 <= i) && (i < 128) )
+				hi |= (indicators.get(i).getSecond() ? (1 << (i - 64)) : 0);
+			
+			Preconditions.checkState(i < 128, "CompetencePanel.saveIndicatorsState() : too many indicators (max 128)");
+		}
+		
+		try {
+			for(int j = 0; j < profiles.get(currentCompetenceNumber).getThird().size(); j++) {
+				int ind = profiles.get(currentCompetenceNumber).getThird().get(j);
+				RoundProfileNode rpn = cacheRoundProfile.get(ind);
+				// lazy db write 
+				int flag = 0;
+				if(rpn.roundProfileIndicatorFlagsHI != hi) {
+					rpn.roundProfileIndicatorFlagsHI = hi;
+					flag |= RoundProfileNode.ROUND_PROFILE_INDICATOR_FLAGS_HI;
+				}
+				if(rpn.roundProfileIndicatorFlagsLO != lo) {
+					rpn.roundProfileIndicatorFlagsLO = lo;
+					flag |= RoundProfileNode.ROUND_PROFILE_INDICATOR_FLAGS_LO;
+				}
+				if(Math.abs(cost - rpn.roundProfileCost) > 0.9) {
+					rpn.roundProfileCost = (double)cost;	
+					flag |= RoundProfileNode.ROUND_PROFILE_COST;
+				}
+
+				if(flag != 0)
+					rpn.update(kdb, flag);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 	
+	/**
+	 * Обработчик событий от мыши для панели название компетенции и списка индикаторов
+	 * @author Eduard
+	 *
+	 */
 	private class MyMouseHandler extends MouseAdapter {
 		@Override
 		public void mouseClicked(MouseEvent e) {
@@ -728,6 +940,8 @@ class CompetencePanel extends JPanel implements ActionListener {
 
 
 public class StartTest extends JFrame implements ActionListener{
+	private static final long serialVersionUID = 1L;
+
 	private DatabaseConnectionKeeper kdb;
 	private DatabaseConnectionKeeper kdbM;
 	private SinnerPanel sinnerPanel;
@@ -736,6 +950,8 @@ public class StartTest extends JFrame implements ActionListener{
 	private Map<String, String> map = new HashMap<>();
 	private static final String SINNER_PANEL = "sinners";
 	private static final String COMPETENCE_PANEL = "competence";
+	private  String currentPanel;
+
 	private LoadingCache<Integer, DivisionNode> cacheDivision;
 	private LoadingCache<Integer, PositionNode> cachePosition;
 	private LoadingCache<Integer, PersonNode> cachePerson;
@@ -743,8 +959,8 @@ public class StartTest extends JFrame implements ActionListener{
 	private LoadingCache<Integer, ProfileNode> cacheProfile;
 	private LoadingCache<Integer, CompetenceNode> cacheCompetence;	
 	private LoadingCache<Integer, IndicatorNode> cacheIndicator;
-	
-	
+	private LoadingCache<Integer, RoundProfileNode> cacheRoundProfile;
+
 	private void makeCaches() {
 		cacheDivision = CacheBuilder.newBuilder().
 				build(new MinosCacheLoader<Integer, DivisionNode>(DivisionNode.class, kdb, 
@@ -782,8 +998,11 @@ public class StartTest extends JFrame implements ActionListener{
 				build(new MinosCacheLoader<Integer, IndicatorNode>(IndicatorNode.class, kdbM, 
 						"select id, name, level_id, competence_incarnatio, item, date_create, date_remove, host  from MinosIndicator where (id in (%id%)) and (GetDate() between date_create and date_remove) order by item",
 						"%id%", map));
-
-
+		
+		cacheRoundProfile = CacheBuilder.newBuilder().
+				build(new MinosCacheLoader<Integer, RoundProfileNode>(RoundProfileNode.class, kdbM,
+						"select id, actors_id, profile_id, indicatorResultFlagsHi, indicatorResultFlagsLo, cost from MinosRoundProfile where id in (%id%)",
+						"%id%", map));
 	}
 	
 	private void makeMap() {
@@ -850,9 +1069,17 @@ public class StartTest extends JFrame implements ActionListener{
 		map.put("indicatorRemove", "date_remove");
 		map.put("indicatorHost", "host");
 
+		map.put("RoundProfileTable", "MinosRoundProfile");
+		map.put("roundProfileID", "id");
+		map.put("roundProfileRoundActorsID", "actors_id");
+		map.put("roundProfileProfileID", "profile_id");
+		map.put("roundProfileIndicatorFlagsHI", "indicatorResultFlagsHi");
+		map.put("roundProfileIndicatorFlagsLO", "indicatorResultFlagsLo");
+		map.put("roundProfileCost", "cost");
+
+		RoundProfileNode.names = map;
 	}
-	
-	
+
 	private String currentLogin; 
 	private int currentID;
 	
@@ -878,40 +1105,47 @@ public class StartTest extends JFrame implements ActionListener{
 			}
 			currentID = (Integer)tk.getValue(1, 1);
 
-			
-			
-			
-
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
 
-		
 		makeMap();
 		makeCaches();
 		
-		JFrame frm = new JFrame();
+		JFrame frm = new JFrame("Оценка по компетенциям");
+		frm.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				if(currentPanel == COMPETENCE_PANEL) {
+					competencePanel.makeCost();
+				}
+				
+			}
+		});
+
 		cards = new JPanel(new CardLayout());
 		
 		sinnerPanel = new SinnerPanel(kdbM, currentID, cachePerson, cacheRoundActors, cacheDivision, cachePosition, cacheProfile);
 		sinnerPanel.addActionListener(this);
 		
-		competencePanel = new CompetencePanel(kdbM, currentID, cacheCompetence, cacheIndicator);
+		competencePanel = new CompetencePanel(kdbM, currentID, cacheCompetence, cacheIndicator, cacheRoundProfile);
 		competencePanel.addActionListener(this);
-		//competencePanel.setSinnerID(50002311);
 
 		cards.add(sinnerPanel, SINNER_PANEL);
 		cards.add(competencePanel, COMPETENCE_PANEL);
 
 		frm.setContentPane(cards);
 		((CardLayout)cards.getLayout()).show(cards, SINNER_PANEL);
+		currentPanel = SINNER_PANEL;
 		frm.setSize(640, 480);
 		frm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frm.setVisible(true);
 
 	}
-	
+
+	/**
+	 * обработка событий на панелях CompetencePanel и SinnerPanel при нажатии конпок переключения между ними
+	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource() instanceof JButton) {
@@ -919,13 +1153,13 @@ public class StartTest extends JFrame implements ActionListener{
 			if(btn.getName().equals(SinnerPanel.BUTTON_NAME)) {
 				competencePanel.setSinnerID(sinnerPanel.getSinnerID());
 				((CardLayout)cards.getLayout()).show(cards, COMPETENCE_PANEL);
+				currentPanel = COMPETENCE_PANEL;
 			}
 			if(btn.getName().equals(CompetencePanel.BUTTON_NAME)) {
 				((CardLayout)cards.getLayout()).show(cards, SINNER_PANEL);
+				currentPanel = SINNER_PANEL;
 			}
-
 		}
-		
 	}
 	
 	public static void main(String[] args) {
@@ -933,6 +1167,4 @@ public class StartTest extends JFrame implements ActionListener{
 			"jdbc:sqlserver://192.168.56.2:1433;databaseName=serg;user=sa;password=Q11W22e33;");
 
 	}
-
-
 }

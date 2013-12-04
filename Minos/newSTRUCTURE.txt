@@ -63,8 +63,8 @@ CREATE TABLE MinosIndicator (
 	level_id 				INTEGER NOT NULL,  -- уровень в который вложен индикатор
 	competence_incarnatio	INTEGER NOT NULL,  -- код компетеции
 	item					INTEGER NOT NULL DEFAULT 1, -- позиция в списке	
-	date_create				DATETIME NOT NULL, --дата начала действия элемента
-	date_remove				DATETIME NOT NULL, -- окончание действия элемента	
+	date_create				DATETIME NOT NULL DEFAULT GETDATE(), --дата начала действия элемента
+	date_remove				DATETIME NOT NULL DEFAULT GETDATE(), -- окончание действия элемента	
 	host					VARCHAR(2048) NOT NULL DEFAULT SYSTEM_USER -- user who create element
 );
 

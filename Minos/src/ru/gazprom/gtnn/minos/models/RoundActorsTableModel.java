@@ -11,11 +11,8 @@ import ru.gazprom.gtnn.minos.entity.PersonNode;
 import ru.gazprom.gtnn.minos.entity.RoundActorsNode;
 import ru.gazprom.gtnn.minos.util.DatabaseConnectionKeeper;
 import ru.gazprom.gtnn.minos.util.TableKeeper;
-import ru.gedr.util.tuple.Pair;
-import ru.gedr.util.tuple.Unit;
 
 import com.google.common.base.Preconditions;
-import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 
 public class RoundActorsTableModel implements TableModel{

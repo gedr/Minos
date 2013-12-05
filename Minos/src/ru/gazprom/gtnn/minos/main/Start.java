@@ -2,6 +2,7 @@ package ru.gazprom.gtnn.minos.main;
 
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.event.KeyEvent;
 import java.sql.SQLException;
@@ -64,12 +65,12 @@ import ru.gazprom.gtnn.minos.util.*;
 
 
 public class Start {
-	private String connectionUrl;
+	//private String connectionUrl;
 	private DatabaseConnectionKeeper kdb, kdbM;
 	private Map<String, String> map = new HashMap<>();
 
 	public Start(String connectionUrl) {
-		this.connectionUrl = connectionUrl;
+		//this.connectionUrl = connectionUrl;
 		
 		try {
 			kdb = new DatabaseConnectionKeeper(connectionUrl, null, null);
@@ -81,7 +82,7 @@ public class Start {
 			JOptionPane.showMessageDialog(null,
 				    "Возникла ошибка при подключении к базе данных",
 				    "Ошибка",
-				    JOptionPane.WARNING_MESSAGE);
+				    JOptionPane.ERROR_MESSAGE);
 			e.printStackTrace();
 		}
 		makeUI();
@@ -390,7 +391,7 @@ public class Start {
 				treeCatalog.setRootVisible(false);
 				treeCatalog.setName("Catalog");
 				
-				JTree treePersonInDivision = new JTree(personInDivisionModel);
+				//JTree treePersonInDivision = new JTree(personInDivisionModel);
 				/*
 				tper.setDragEnabled(true);
 				tper.setTransferHandler();
@@ -486,7 +487,7 @@ public class Start {
 				imt.put(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0), actionT);
 
 				ActionMap actionMapT = table.getActionMap();
-				actionMapT.put(actionT, new PrintResult(table, kdbM));
+				actionMapT.put(actionT, new PrintResult(table, kdbM, cachePerson));
 				table.setActionMap(actionMapT);
 
 				
@@ -497,7 +498,10 @@ public class Start {
 				
 				JComboBox<RoundNode> cmb = new JComboBox<>(); 
 				RoundModel roundModel = new RoundModel(kdbM, cacheRound, roundLabel, table, "select id from MinosRound");
-				cmb.setModel( roundModel );			
+				cmb.setModel( roundModel );
+				Dimension dim = cmb.getPreferredSize();
+				dim.width *= 10;
+				cmb.setPreferredSize(dim);
 				
 				
 				JPanel panelMinos_Sinner = new JPanel(new BorderLayout());

@@ -15,10 +15,10 @@ import javax.swing.TransferHandler;
 public class MyTransferHandler extends TransferHandler {
 	private static final long serialVersionUID = 1L;
 	private Image img;
-	private String str;
+	//private String str;
 
 	public MyTransferHandler(String str) {
-		this.str = str;
+		//this.str = str;
 		try {
 			img = ImageIO.read(new File("C:\\Users\\Ed\\Google Диск\\Новая папка\\Minos\\image\\page_add_32.png"));
 		} catch (IOException e) {

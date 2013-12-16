@@ -326,8 +326,8 @@ public class Start {
 				
 				
 				BasicModel divisionModel = new DivisionModel(kdb, cacheDivision, 
-						"select tOrgStruID from tOrgStru where Parent = 0  and isnull(Isdelete, 0) = 0", 
-						"select tOrgStruID from tOrgStru where Parent = %id% and isnull(Isdelete, 0) = 0", "%id%");
+						"select tOrgStruID from tOrgStru where Parent = 0  and isnull(Isdelete, 0) = 0 ", 
+						"select tOrgStruID from tOrgStru where Parent = %id% and isnull(Isdelete, 0) = 0  and isnull(OtizOk, 0) = 1", "%id%");
 				
 				BasicModel positionInDivisionModel = new PositionInDivisionModel(kdb, cachePosition, divisionModel, 
 						"select distinct(tStatDolSpId) from tOrgAssignCur where tOrgStruId = %id%", 
@@ -378,7 +378,7 @@ public class Start {
 						"and p.variety = 1 ",
 						arr);
 
-				TreeCellRenderer tcr = new MinosTreeRenderer(cacheCompetence, cacheLevel);
+				TreeCellRenderer tcr = new MinosTreeRenderer(cacheCompetence, cacheLevel, cachePosition);
 				
 				JTree treeCompetenceAndCatalog = new JTree(competenceAndCatalogModel);
 				treeCompetenceAndCatalog.setRootVisible(false);				
@@ -506,7 +506,9 @@ public class Start {
 				
 				JPanel panelMinos_Sinner = new JPanel(new BorderLayout());
 				JTree treeMinoses = new JTree(personInDivisionModel);
+				treeMinoses.setCellRenderer(tcr);
 				JTree treeSinners = new JTree(profileAndPersonInDivisionModel);
+				treeSinners.setCellRenderer(tcr);
 				JSplitPane splitPane3 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
 						new JScrollPane(treeMinoses),
 						new JScrollPane(treeSinners));

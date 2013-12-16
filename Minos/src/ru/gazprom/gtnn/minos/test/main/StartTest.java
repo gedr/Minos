@@ -145,8 +145,11 @@ class SinnerPanel extends JPanel {
 						
 			TableKeeper tk = kdb.selectRows(request);
 						
-			if( (tk == null) || (tk.getRowCount() == 0) )
+			if( (tk == null) || (tk.getRowCount() == 0) ) {
+				setLayout(new BorderLayout());
+				add(new JLabel("<HTML><h1>Для Вас, в данный момент, нет открытых раундов тестирования</h1>", SwingConstants.CENTER));
 				return;
+			}
 						
 			roundActorsList = new ArrayList<>();
 			for(int i = 0; i < tk.getRowCount(); i++) {
@@ -621,7 +624,7 @@ class CompetencePanel extends JPanel implements ActionListener {
 				lbl.setBackground(isSelected ? Color.LIGHT_GRAY : Color.WHITE);
 				
 				lbl.setIcon(img.get(indicators.get(index).getSecond() ? "prefs_24" : "prefs_shadow_24"));
-				lbl.setText(value.indicatorName + " [ " + String.valueOf(value.indicatorLevelID) + " ] ");
+				lbl.setText(value.indicatorName); // + " [ " + String.valueOf(value.indicatorLevelID) + " ] ");
 				return lbl;
 			}
 		});

@@ -30,6 +30,11 @@ import ru.gazprom.gtnn.minos.util.DatabaseConnectionKeeper;
 import ru.gazprom.gtnn.minos.util.TableKeeper;
 
 public class PrintResult extends AbstractAction {
+	private static final String TEST_RESULT_PATTERN	= "Competence_Test_Result";
+	private static final String COMPETENCE_PATTERN	= "competence";
+	private static final String SINNNER_FIO_PATTERN	= "Person_name";
+	
+	
 	private static final long serialVersionUID = 1L;
 	private JTable tbl;
 	private File patternWordFile;
@@ -80,8 +85,14 @@ public class PrintResult extends AbstractAction {
 				append(minos.personSurname).append(minos.personName).append(minos.personPatronymic).append("_").
 				append(sinner.personSurname).append(sinner.personName).append(sinner.personPatronymic).append("_").
 				append(System.currentTimeMillis()).append(".docx");
+				String fileName = sb.toString();
+				
+				sb.delete(0,  sb.length());
+				sb.append(sinner.personSurname).append(" ").
+				append(sinner.personName).append(" ").
+				append(sinner.personPatronymic);				
 
-				print(actors[i].roundActorsID, sb.toString());	
+				print(actors[i].roundActorsID, fileName, sb.toString());	
 			}
 		} catch (ExecutionException e) {
 			e.printStackTrace();
@@ -104,20 +115,19 @@ public class PrintResult extends AbstractAction {
 	}
 	
 	/**
-	 * поиск в строке €чейки с полем содержащим маркер CompetenceTestResult
+	 * поиск в строке €чейки с полем содержащим маркер pattern
 	 * @return
 	 */
-	private int findCompetenceTestResult(XWPFTableRow row) {
-		//row.get
+	private int findCompetenceTestResult(XWPFTableRow row, String pattern) {
 		List<XWPFTableCell> cells = row.getTableCells();
 		for(int i = 0; i < cells.size(); i++)
-			if(cells.get(i).getText().equalsIgnoreCase("Competence_Test_Result")) 
+			if(cells.get(i).getText().equalsIgnoreCase(pattern)) 
 				return i;
 		
 		return -1;
 	}
 	
-	public void print(int actorsID, String outputFileName) {
+	public void print(int actorsID, String outputFileName, String sinnerFIO) {
 		double commonResult = 0.0;
 		String sql = " select mc.name, mc.variety, mrp.cost, mp.min_level from MinosRoundProfile mrp "
 				+ " inner join MinosProfile mp on mp.id = mrp.profile_id "
@@ -169,12 +179,25 @@ public class PrintResult extends AbstractAction {
 			
 			System.out.println(rows.size());
 			for(int i= 0; i < rows.size(); i++) {
-				int num = findCompetenceTestResult(rows.get(i));
+				
+				// провер€ем существование €чейки с шаблонам дл€ вывода результата
+				int num = findCompetenceTestResult(rows.get(i), TEST_RESULT_PATTERN);
 				if(num >= 0) {
 					clearParagraphsAndRuns(rows.get(i).getCell(num));
 					rows.get(i).getCell(num).getParagraphs().get(0).getRuns().get(0).setText(String.format("%4.1f", commonResult) + " %", 0);
+					continue;
 				}
-				if( flagCompetenceListFinish && (num < 0) ) {
+				
+				// провер€ем существование €чейки с шаблонам дл€ вывода результата
+				num = findCompetenceTestResult(rows.get(i), SINNNER_FIO_PATTERN);
+				if(num >= 0) {
+					clearParagraphsAndRuns(rows.get(i).getCell(num));
+					rows.get(i).getCell(num).getParagraphs().get(0).getRuns().get(0).setText(sinnerFIO, 0);
+					continue;
+				}				
+				
+				// удал€ем лишние строки
+				if( flagCompetenceListFinish) {
 					rowForDeleteStart = (rowForDeleteStart < 0 ? i : rowForDeleteStart);
 					rowForDeleteStop = i;
 				}
@@ -183,7 +206,7 @@ public class PrintResult extends AbstractAction {
 				counter = 0;		
 				List<XWPFTableCell> cells = rows.get(i).getTableCells();
 				for(int j= 0; j < cells.size(); j++) {
-					if(cells.get(j).getText().equalsIgnoreCase("competence") && !flagCompetenceListFinish) {
+					if(cells.get(j).getText().equalsIgnoreCase(COMPETENCE_PATTERN) && !flagCompetenceListFinish) {
 						clearParagraphsAndRuns(cells.get(j));
 
 						cells.get(j).getParagraphs().get(0).

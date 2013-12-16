@@ -2,15 +2,15 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
-	<classpathentry kind="lib" path="C:/DevTools/Lib/java/tuple2.jar"/>
-	<classpathentry kind="lib" path="C:/DevTools/Lib/java/guava-15.0.jar"/>
-	<classpathentry kind="lib" path="C:/DevTools/Lib/java/MS_SQL/sqljdbc4.jar"/>
-	<classpathentry kind="lib" path="C:/DevTools/Lib/java/imageT.jar"/>
-	<classpathentry kind="lib" path="C:/DevTools/Lib/java/poi-3.9/poi-3.9-20121203.jar"/>
-	<classpathentry kind="lib" path="C:/DevTools/Lib/java/poi-3.9/poi-ooxml-3.9-20121203.jar"/>
-	<classpathentry kind="lib" path="C:/DevTools/Lib/java/poi-3.9/poi-ooxml-schemas-3.9-20121203.jar"/>
-	<classpathentry kind="lib" path="C:/DevTools/Lib/java/poi-3.9/poi-scratchpad-3.9-20121203.jar"/>
-	<classpathentry kind="lib" path="C:/DevTools/Lib/java/poi-3.9/ooxml-lib/dom4j-1.6.1.jar"/>
-	<classpathentry kind="lib" path="C:/DevTools/Lib/java/poi-3.9/ooxml-lib/xmlbeans-2.3.0.jar"/>
+	<classpathentry kind="lib" path="D:/dev/lib/guava-15.0.jar"/>
+	<classpathentry kind="lib" path="D:/dev/lib/tuple2.jar"/>
+	<classpathentry kind="lib" path="D:/dev/lib/imageT.jar"/>
+	<classpathentry kind="lib" path="D:/dev/lib/poi-3.9/poi-3.9-20121203.jar"/>
+	<classpathentry kind="lib" path="D:/dev/lib/poi-3.9/poi-ooxml-3.9-20121203.jar"/>
+	<classpathentry kind="lib" path="D:/dev/lib/poi-3.9/poi-ooxml-schemas-3.9-20121203.jar"/>
+	<classpathentry kind="lib" path="D:/dev/lib/poi-3.9/poi-scratchpad-3.9-20121203.jar"/>
+	<classpathentry kind="lib" path="D:/dev/lib/poi-3.9/ooxml-lib/dom4j-1.6.1.jar"/>
+	<classpathentry kind="lib" path="D:/dev/lib/poi-3.9/ooxml-lib/xmlbeans-2.3.0.jar"/>
+	<classpathentry kind="lib" path="D:/dev/lib/sqljdbc4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

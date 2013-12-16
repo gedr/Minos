@@ -76,7 +76,7 @@ public class AddMinos_SinnerListener implements ActionListener, Runnable {
 
 							PersonNode sinner = (PersonNode) sinnerPath.getLastPathComponent();
 
-							if (sinner.personID != minos.personID) {
+							//if (sinner.personID != minos.personID) {
 								// save round actors
 								roundActors.roundActorsMinosID = minos.personID;
 								roundActors.roundActorsSinnerID = sinner.personID;
@@ -97,7 +97,7 @@ public class AddMinos_SinnerListener implements ActionListener, Runnable {
 									roundProfile.insert(kdb, 
 											RoundProfileNode.ROUND_PROFILE_ACTORS | RoundProfileNode.ROUND_PROFILE_PROFILE);									
 								}
-							}
+							//}
 						}
 					}
 				}

@@ -105,8 +105,16 @@ public class MinosTreeRenderer extends DefaultTreeCellRenderer {
 		if(value instanceof PersonNode) {
 			System.out.println("PersonNode");
 			PersonNode node = (PersonNode)value;
+			PositionNode pn = null;
+			try {
+				pn = cachePosition.get(node.personPositionID);
+			} catch (ExecutionException e) {
+				pn = null;
+				e.printStackTrace();
+			}
 			cell.setIcon(person);
-			cell.setText(node.personSurname + " " + node.personName + " " + node.personPatronymic);
+			cell.setText(node.personSurname + " " + node.personName + " " + node.personPatronymic + 
+					" [ " + (pn == null ? " null" : pn.positionName) + " ]");
 			return cell;
 		}
 
@@ -149,12 +157,15 @@ public class MinosTreeRenderer extends DefaultTreeCellRenderer {
 	}
 
 	public MinosTreeRenderer(LoadingCache<Integer, CompetenceNode> cacheCompetence,
-			LoadingCache<Integer, LevelNode> cacheLevel) {
+			LoadingCache<Integer, LevelNode> cacheLevel,
+			LoadingCache<Integer, PositionNode> cachePosition) {
 		super();
 		this.cacheCompetence = cacheCompetence;
 		this.cacheLevel = cacheLevel;		
+		this.cachePosition = cachePosition;
 	}
 
 	private LoadingCache<Integer, CompetenceNode> cacheCompetence;
+	private LoadingCache<Integer, PositionNode> cachePosition;
 	private LoadingCache<Integer, LevelNode> cacheLevel;
 }
